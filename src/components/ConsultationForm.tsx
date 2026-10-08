@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { SiteContent } from '../content/content';
 import { ConsultationFormData } from '../types';
+import { GOOGLE_SHEETS_WEB_APP_URL } from '../config/sheets';
+import { trackFormEvent } from '../lib/analytics';
 import {
   CheckCircle2,
   AlertCircle,
@@ -32,12 +34,21 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
     briefDescription: '',
   });
 
+  const [honeypot, setHoneypot] = useState('');
   const [errors, setErrors] = useState<Partial<Record<keyof ConsultationFormData, string>>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
-  // Sync selected matter if updated from Services section
+  const { form: formContent, contactCard } = content.consultation;
+  const { validationErrors } = formContent;
+
+  // Track form view on component mount
+  useEffect(() => {
+    trackFormEvent('form_view');
+  }, []);
+
+  // Sync selected matter if updated from Services or Bail section
   useEffect(() => {
     if (selectedMatter) {
       setFormData((prev) => ({ ...prev, legalMatter: selectedMatter }));
@@ -47,32 +58,33 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   const validateField = (field: keyof ConsultationFormData, value: string): string | null => {
     switch (field) {
       case 'fullName':
-        if (!value.trim()) return 'Full name is required.';
-        if (value.trim().length < 2) return 'Full name must be at least 2 characters.';
-        if (value.trim().length > 100) return 'Full name cannot exceed 100 characters.';
+        if (!value.trim()) return validationErrors.nameRequired;
+        if (value.trim().length < 2 || value.trim().length > 100) return validationErrors.nameLength;
         return null;
       case 'phone': {
         const clean = value.replace(/[\s\-\(\)]/g, '');
-        if (!clean) return 'Phone number is required.';
+        if (!clean) return validationErrors.phoneRequired;
         if (clean.length < 8 || clean.length > 15 || !/^\+?[0-9]{8,15}$/.test(clean)) {
-          return 'Please enter a valid phone number with area/country code.';
+          return validationErrors.phoneInvalid;
         }
         return null;
       }
       case 'email': {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-        if (!value.trim()) return 'Email address is required.';
-        if (!emailRegex.test(value.trim())) return 'Please enter a valid email address.';
-        if (value.trim().length > 120) return 'Email cannot exceed 120 characters.';
+        if (!value.trim()) return validationErrors.emailRequired;
+        if (!emailRegex.test(value.trim()) || value.trim().length > 120) {
+          return validationErrors.emailInvalid;
+        }
         return null;
       }
       case 'legalMatter':
-        if (!value.trim()) return 'Please select a legal matter category.';
+        if (!value.trim()) return validationErrors.matterRequired;
         return null;
       case 'briefDescription':
-        if (!value.trim()) return 'A brief description is required.';
-        if (value.trim().length < 5) return 'Please describe your matter in at least 5 characters.';
-        if (value.trim().length > 1000) return 'Description cannot exceed 1,000 characters.';
+        if (!value.trim()) return validationErrors.descRequired;
+        if (value.trim().length < 5 || value.trim().length > 1000) {
+          return validationErrors.descLength;
+        }
         return null;
       default:
         return null;
@@ -92,9 +104,18 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return; // Prevent double-click rapid submission
     setServerError(null);
 
-    // Validate all fields
+    // 1. Bot spam protection: honeypot check
+    if (honeypot.trim().length > 0) {
+      // Silently accept without posting to sheet
+      setSubmitSuccess(true);
+      trackFormEvent('form_submit_success', { serviceCategory: formData.legalMatter });
+      return;
+    }
+
+    // 2. Client-side field validation
     const newErrors: Partial<Record<keyof ConsultationFormData, string>> = {};
     (Object.keys(formData) as Array<keyof ConsultationFormData>).forEach((key) => {
       const err = validateField(key, formData[key]);
@@ -103,7 +124,8 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      // Focus first error field
+      trackFormEvent('form_submit_error');
+      // Focus first error field for accessibility
       const firstErrorField = Object.keys(newErrors)[0];
       const element = document.getElementsByName(firstErrorField)[0];
       if (element) (element as HTMLElement).focus();
@@ -112,30 +134,121 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
     setIsSubmitting(true);
 
+    // 3. Prepare Google Sheet payload matching specification
+    const sheetPayload = {
+      name: formData.fullName.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      service: formData.legalMatter,
+      message: formData.briefDescription.trim(),
+      pageUrl: typeof window !== 'undefined' ? window.location.href : '',
+      formName: 'Consultation Enquiry',
+      submittedAt: new Date().toISOString(),
+    };
+
+    const isCustomSheetUrlConfigured =
+      GOOGLE_SHEETS_WEB_APP_URL &&
+      GOOGLE_SHEETS_WEB_APP_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL' &&
+      GOOGLE_SHEETS_WEB_APP_URL.startsWith('http');
+
     try {
-      const res = await fetch('/api/consultation', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      if (isCustomSheetUrlConfigured) {
+        // Direct POST to Google Apps Script Web App
+        // Uses text/plain to avoid browser CORS preflight (OPTIONS) failure
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second timeout
 
-      const data = await res.json().catch(() => ({}));
+        try {
+          const sheetRes = await fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'text/plain;charset=utf-8',
+            },
+            body: JSON.stringify(sheetPayload),
+            signal: controller.signal,
+          });
+          clearTimeout(timeoutId);
 
-      if (res.ok && data.success) {
-        setSubmitSuccess(true);
+          // Asynchronously record backup in server
+          fetch('/api/consultation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+          }).catch(() => {});
+
+          const resData = await sheetRes.json().catch(() => null);
+
+          if (sheetRes.ok || (resData && resData.success !== false)) {
+            setSubmitSuccess(true);
+            trackFormEvent('form_submit_success', { serviceCategory: formData.legalMatter });
+            return;
+          } else {
+            throw new Error('Google Sheets Web App responded with error status');
+          }
+        } catch {
+          clearTimeout(timeoutId);
+
+          // Attempt secondary delivery with mode: 'no-cors' (Google Apps Script executes doPost)
+          try {
+            await fetch(GOOGLE_SHEETS_WEB_APP_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+              },
+              body: JSON.stringify(sheetPayload),
+              mode: 'no-cors',
+            });
+            // Also notify server backup asynchronously
+            fetch('/api/consultation', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData),
+            }).catch(() => {});
+
+            setSubmitSuccess(true);
+            trackFormEvent('form_submit_success', { serviceCategory: formData.legalMatter });
+            return;
+          } catch {
+            // If direct client delivery fails (e.g. adblocker or offline), fallback to internal API
+            const fallbackRes = await fetch('/api/consultation', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData),
+            }).then((r) => r.json()).catch(() => null);
+
+            if (fallbackRes && fallbackRes.success) {
+              setSubmitSuccess(true);
+              trackFormEvent('form_submit_success', { serviceCategory: formData.legalMatter });
+              return;
+            }
+
+            throw new Error('All delivery paths failed');
+          }
+        }
       } else {
-        setServerError(
-          data.error ||
-            'Unable to process consultation request at this time. Please retry or contact directly by phone.'
-        );
+        // Default mode: Processed through standard endpoint (also ready for Google Sheets forwarding)
+        const res = await fetch('/api/consultation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(formData),
+        });
+
+        const data = await res.json().catch(() => ({}));
+
+        if (res.ok && data.success) {
+          setSubmitSuccess(true);
+          trackFormEvent('form_submit_success', { serviceCategory: formData.legalMatter });
+        } else {
+          trackFormEvent('form_submit_error');
+          setServerError(formContent.genericError);
+        }
       }
-    } catch (err) {
-      // Safe generic network failure handling
-      setServerError(
-        'Network communication error. Please check your connection or contact Advocate Anish directly by phone.'
-      );
+    } catch {
+      // Safe, non-technical, human-friendly error message preserving user input
+      trackFormEvent('form_submit_error');
+      setServerError(formContent.genericError);
     } finally {
       setIsSubmitting(false);
     }
@@ -149,21 +262,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
       legalMatter: 'Bail Matters',
       briefDescription: '',
     });
+    setHoneypot('');
     setErrors({});
     setSubmitSuccess(false);
     setServerError(null);
   };
-
-  const matterOptions = [
-    'Bail Matters',
-    'Civil & Criminal Matters',
-    'Business Registration',
-    'Trademark & Intellectual Property',
-    'Traffic Challan Matters',
-    'Compliance',
-    'Legal Documentation',
-    'Other Legal Matter',
-  ];
 
   return (
     <section id="consultation" className="bg-white py-20 sm:py-28 border-b border-neutral-200">
@@ -173,7 +276,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           <div className="flex items-center gap-3 mb-4">
             <span className="w-6 h-[1px] bg-[#800000]"></span>
             <p className="text-xs font-mono uppercase tracking-[0.25em] text-[#800000] font-semibold">
-              {content.consultation.label}
+              {content.consultation.eyebrow}
             </p>
           </div>
           <h2 className="font-editorial-heading text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] leading-tight mb-4">
@@ -190,7 +293,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
             {submitSuccess ? (
               /* Success Confirmation Card */
               <div
-                className="bg-neutral-50 border border-neutral-200 p-8 sm:p-10 shadow-sm"
+                className="bg-[#FBFBFA] border border-neutral-200 p-8 sm:p-10 shadow-sm"
                 role="status"
                 aria-live="polite"
               >
@@ -199,11 +302,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 </div>
 
                 <h3 className="text-2xl font-semibold text-[#111111] mb-3">
-                  {content.consultation.form.successTitle}
+                  {formContent.successTitle}
                 </h3>
 
                 <p className="text-[#444444] text-base leading-relaxed mb-6">
-                  {content.consultation.form.successMessage}
+                  {formContent.successMessage}
                 </p>
 
                 <div className="p-4 bg-white border border-neutral-200 text-xs text-neutral-600 mb-8 space-y-1">
@@ -212,13 +315,13 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     <span>Statutory Confidentiality Assured</span>
                   </div>
                   <p>
-                    All communications are covered by advocate-client privilege. Your inquiry is reviewed directly by Adv. Anish Kumar.
+                    All communications are covered by advocate-client privilege under Indian law. Your inquiry is reviewed directly by Adv. Anish Kumar.
                   </p>
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-4">
                   <a
-                    href={`https://wa.me/919204463290?text=Hello%20Advocate%20Anish%2C%20I%20have%20submitted%20a%20consultation%20request%20regarding%20a%20legal%20matter.`}
+                    href="https://wa.me/919204463290?text=Hello%20Advocate%20Anish%2C%20I%20have%20submitted%20a%20consultation%20request%20regarding%20a%20legal%20matter."
                     target="_blank"
                     rel="noopener noreferrer"
                     className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-6 py-3.5 transition-colors inline-flex items-center justify-center gap-2"
@@ -232,7 +335,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     onClick={handleResetForm}
                     className="border border-neutral-300 hover:border-neutral-900 text-neutral-800 text-xs font-semibold tracking-wider uppercase px-6 py-3.5 transition-colors"
                   >
-                    {content.consultation.form.newInquiryButton}
+                    {formContent.newInquiryButton}
                   </button>
                 </div>
               </div>
@@ -241,10 +344,24 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               <form
                 onSubmit={handleSubmit}
                 noValidate
-                className="bg-neutral-50 p-6 sm:p-10 border border-neutral-200 space-y-6"
+                className="bg-[#FBFBFA] p-6 sm:p-10 border border-neutral-200 space-y-6"
                 aria-label="Legal Consultation Request Form"
               >
-                {/* Server Error Alert */}
+                {/* Honeypot field for invisible spam protection */}
+                <div className="hidden" aria-hidden="true" tabIndex={-1}>
+                  <label htmlFor="website_hp">Leave this field blank</label>
+                  <input
+                    type="text"
+                    id="website_hp"
+                    name="website_hp"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                  />
+                </div>
+
+                {/* Safe Human-Friendly Error Alert */}
                 {serverError && (
                   <div
                     className="p-4 bg-red-50 border-l-4 border-[#800000] text-red-900 flex items-start gap-3"
@@ -252,7 +369,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   >
                     <AlertCircle className="w-5 h-5 text-[#800000] shrink-0 mt-0.5" />
                     <div className="text-xs sm:text-sm">
-                      <p className="font-semibold">Unable to complete request</p>
+                      <p className="font-semibold">Notice</p>
                       <p className="mt-0.5">{serverError}</p>
                     </div>
                   </div>
@@ -266,18 +383,19 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       htmlFor="fullName"
                       className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
                     >
-                      {content.consultation.form.fullNameLabel} <span className="text-[#800000]">*</span>
+                      {formContent.fullNameLabel} <span className="text-[#800000]">*</span>
                     </label>
                     <input
                       type="text"
                       id="fullName"
                       name="fullName"
+                      autoComplete="name"
                       value={formData.fullName}
                       onChange={handleInputChange}
-                      placeholder={content.consultation.form.fullNamePlaceholder}
+                      placeholder={formContent.fullNamePlaceholder}
                       maxLength={100}
                       disabled={isSubmitting}
-                      className={`w-full bg-white border px-4 py-3 text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors ${
+                      className={`w-full bg-white border px-4 py-3 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors ${
                         errors.fullName ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
                       }`}
                       aria-invalid={!!errors.fullName}
@@ -297,18 +415,19 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       htmlFor="phone"
                       className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
                     >
-                      {content.consultation.form.phoneLabel} <span className="text-[#800000]">*</span>
+                      {formContent.phoneLabel} <span className="text-[#800000]">*</span>
                     </label>
                     <input
                       type="tel"
                       id="phone"
                       name="phone"
+                      autoComplete="tel"
                       value={formData.phone}
                       onChange={handleInputChange}
-                      placeholder={content.consultation.form.phonePlaceholder}
+                      placeholder={formContent.phonePlaceholder}
                       maxLength={20}
                       disabled={isSubmitting}
-                      className={`w-full bg-white border px-4 py-3 text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors ${
+                      className={`w-full bg-white border px-4 py-3 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors ${
                         errors.phone ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
                       }`}
                       aria-invalid={!!errors.phone}
@@ -331,18 +450,19 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       htmlFor="email"
                       className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
                     >
-                      {content.consultation.form.emailLabel} <span className="text-[#800000]">*</span>
+                      {formContent.emailLabel} <span className="text-[#800000]">*</span>
                     </label>
                     <input
                       type="email"
                       id="email"
                       name="email"
+                      autoComplete="email"
                       value={formData.email}
                       onChange={handleInputChange}
-                      placeholder={content.consultation.form.emailPlaceholder}
+                      placeholder={formContent.emailPlaceholder}
                       maxLength={120}
                       disabled={isSubmitting}
-                      className={`w-full bg-white border px-4 py-3 text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors ${
+                      className={`w-full bg-white border px-4 py-3 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors ${
                         errors.email ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
                       }`}
                       aria-invalid={!!errors.email}
@@ -362,7 +482,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       htmlFor="legalMatter"
                       className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
                     >
-                      {content.consultation.form.matterLabel} <span className="text-[#800000]">*</span>
+                      {formContent.matterLabel} <span className="text-[#800000]">*</span>
                     </label>
                     <select
                       id="legalMatter"
@@ -370,12 +490,12 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       value={formData.legalMatter}
                       onChange={handleInputChange}
                       disabled={isSubmitting}
-                      className="w-full bg-white border border-neutral-300 px-4 py-3 text-sm text-[#111111] focus:outline-none focus:border-[#800000] transition-colors"
+                      className="w-full bg-white border border-neutral-300 px-4 py-3 text-base sm:text-sm text-[#111111] focus:outline-none focus:border-[#800000] transition-colors"
                       required
                     >
-                      {matterOptions.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
+                      {formContent.matterOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
                         </option>
                       ))}
                     </select>
@@ -394,7 +514,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                       htmlFor="briefDescription"
                       className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111]"
                     >
-                      {content.consultation.form.descLabel} <span className="text-[#800000]">*</span>
+                      {formContent.descLabel} <span className="text-[#800000]">*</span>
                     </label>
                     <span className="text-[11px] font-mono text-neutral-400">
                       {formData.briefDescription.length}/1000
@@ -406,10 +526,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     rows={4}
                     value={formData.briefDescription}
                     onChange={handleInputChange}
-                    placeholder={content.consultation.form.descPlaceholder}
+                    placeholder={formContent.descPlaceholder}
                     maxLength={1000}
                     disabled={isSubmitting}
-                    className={`w-full bg-white border p-4 text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors resize-y ${
+                    className={`w-full bg-white border p-4 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors resize-y ${
                       errors.briefDescription ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
                     }`}
                     aria-invalid={!!errors.briefDescription}
@@ -426,7 +546,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                 {/* Privacy Assurance Text */}
                 <div className="flex items-start gap-2.5 text-xs text-neutral-500 pt-1">
                   <Lock className="w-3.5 h-3.5 text-[#800000] shrink-0 mt-0.5" />
-                  <p>{content.consultation.form.privacyConsent}</p>
+                  <p>{formContent.privacyConsent}</p>
                 </div>
 
                 {/* Submit Action Button */}
@@ -439,11 +559,11 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>{content.consultation.form.submittingButton}</span>
+                        <span>{formContent.submittingButton}</span>
                       </>
                     ) : (
                       <>
-                        <span>{content.consultation.form.submitButton}</span>
+                        <span>{formContent.submitButton}</span>
                         <ArrowRight className="w-4 h-4 text-[#EACEAA]" />
                       </>
                     )}
@@ -457,7 +577,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           <div className="lg:col-span-5">
             <div className="bg-[#111111] text-white p-8 sm:p-10 border border-white/10">
               <h3 className="font-serif text-2xl font-normal text-white mb-2">
-                {content.consultation.contactCard.title}
+                {contactCard.title}
               </h3>
               <p className="text-xs text-[#EACEAA] font-mono uppercase tracking-widest mb-8">
                 Independent Legal Practice · Delhi NCR
@@ -469,10 +589,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <MapPin className="w-4 h-4 text-[#EACEAA] shrink-0 mt-0.5" />
                   <div>
                     <span className="text-neutral-400 block uppercase font-mono text-[10px] tracking-wider mb-0.5">
-                      {content.consultation.contactCard.chamberLabel}
+                      {contactCard.chamberLabel}
                     </span>
                     <span className="text-neutral-200 leading-snug">
-                      {content.consultation.contactCard.chamberAddress}
+                      {contactCard.chamberAddress}
                     </span>
                   </div>
                 </div>
@@ -482,7 +602,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <Phone className="w-4 h-4 text-[#EACEAA] shrink-0 mt-0.5" />
                   <div>
                     <span className="text-neutral-400 block uppercase font-mono text-[10px] tracking-wider mb-0.5">
-                      {content.consultation.contactCard.phoneLabel}
+                      {contactCard.phoneLabel}
                     </span>
                     <a
                       href={`tel:${content.brand.phone}`}
@@ -498,7 +618,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <Mail className="w-4 h-4 text-[#EACEAA] shrink-0 mt-0.5" />
                   <div>
                     <span className="text-neutral-400 block uppercase font-mono text-[10px] tracking-wider mb-0.5">
-                      {content.consultation.contactCard.emailLabel}
+                      {contactCard.emailLabel}
                     </span>
                     <a
                       href={`mailto:${content.brand.email}`}
@@ -514,10 +634,10 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                   <Clock className="w-4 h-4 text-[#EACEAA] shrink-0 mt-0.5" />
                   <div>
                     <span className="text-neutral-400 block uppercase font-mono text-[10px] tracking-wider mb-0.5">
-                      {content.consultation.contactCard.availabilityLabel}
+                      {contactCard.availabilityLabel}
                     </span>
                     <span className="text-neutral-200">
-                      {content.consultation.contactCard.availabilityValue}
+                      {contactCard.availabilityValue}
                     </span>
                   </div>
                 </div>
@@ -526,7 +646,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               {/* Direct WhatsApp Callout */}
               <div className="mt-8 pt-6 border-t border-white/10">
                 <a
-                  href={`https://wa.me/919204463290?text=Hello%20Advocate%20Anish%2C%20I%20would%20like%20to%20consult%20regarding%20a%20legal%20matter.`}
+                  href="https://wa.me/919204463290?text=Hello%20Advocate%20Anish%2C%20I%20would%20like%20to%20consult%20regarding%20a%20legal%20matter."
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase py-3.5 px-4 transition-colors flex items-center justify-center gap-2 border border-[#800000] hover:border-[#EACEAA]/40 shadow-sm"

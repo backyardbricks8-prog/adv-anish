@@ -136,16 +136,22 @@ async function createServer() {
       }
       duplicateSubmissions.set(duplicateKey, now);
 
+function sanitizeInput(str: string): string {
+  return str.replace(/<[^>]*>?/gm, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
+}
+
       // 4. Secure lead object creation (never log confidential description)
+      const sanitizedName = sanitizeInput(fullName);
+      const sanitizedDesc = sanitizeInput(briefDescription);
       const leadId = crypto.randomUUID();
       const leadRecord: ConsultationLead = {
         id: leadId,
         createdAt: new Date().toISOString(),
-        fullName: fullName.trim(),
+        fullName: sanitizedName,
         phone: cleanPhone,
         email: cleanEmail,
         legalMatter: cleanMatter,
-        briefDescription: briefDescription.trim(),
+        briefDescription: sanitizedDesc,
         source: 'Advocate Anish Single-Page Website',
       };
 
@@ -164,6 +170,33 @@ async function createServer() {
       } catch (storageErr) {
         // Storage logged internally without leaking to client
         console.error('[STORAGE_NOTE] Failed to persist file, kept in memory');
+      }
+
+      // Forward to Google Apps Script Web App if configured in environment or default config
+      const serverSheetsUrl =
+        process.env.GOOGLE_SHEETS_WEB_APP_URL ||
+        process.env.VITE_GOOGLE_SHEETS_WEB_APP_URL ||
+        'https://script.google.com/macros/s/AKfycbyQHiyXcydcz7ADhMumrmWxyhc1U7kjGZ4ZldoAAMJCo7D0m9hmI4OIgB2xdkUgne46/exec';
+      if (serverSheetsUrl && serverSheetsUrl.startsWith('http') && serverSheetsUrl !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL') {
+        const nowObj = new Date();
+        fetch(serverSheetsUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: sanitizedName,
+            email: cleanEmail,
+            phone: cleanPhone,
+            service: cleanMatter,
+            message: sanitizedDesc,
+            pageUrl: (req.headers.referer || req.headers.origin || '').toString(),
+            formName: 'Consultation Enquiry',
+            submissionDate: nowObj.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }),
+            submissionTime: nowObj.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }),
+            submittedAt: leadRecord.createdAt,
+          }),
+        }).catch((forwardErr: any) => {
+          console.warn('[SHEETS_FORWARD_WARN] Failed to forward to Google Apps Script:', forwardErr?.message);
+        });
       }
 
       return res.status(200).json({

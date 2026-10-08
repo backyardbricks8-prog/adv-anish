@@ -1,7 +1,8 @@
 {
-  "name": "react-example",
+  "name": "advocate-anish",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Official legal practice website of Adv. Anish Kumar (Delhi NCR) with Google Sheets consultation integration",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",

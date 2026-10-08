@@ -1,6 +1,6 @@
 import React from 'react';
 import { SiteContent } from '../content/content';
-import { HelpCircle, CheckCircle2 } from 'lucide-react';
+import { HelpCircle, AlertTriangle, ArrowRight, ShieldCheck } from 'lucide-react';
 
 interface TrustClarificationProps {
   content: SiteContent;
@@ -11,75 +11,122 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
   content,
   onConsultClick,
 }) => {
+  const { problemSolution } = content;
+
   return (
-    <section className="bg-white text-[#111111] py-16 sm:py-20 border-b border-neutral-200">
+    <section className="bg-white text-[#111111] py-20 sm:py-28 border-b border-neutral-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Verified Facts Editorial Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 pb-14 border-b border-neutral-200">
-          {content.trustStrip.verifiedFacts.map((fact, index) => (
-            <div key={index} className="flex flex-col border-l-2 border-[#111111] pl-4 sm:pl-5">
-              <span className="text-[11px] font-mono uppercase tracking-widest text-[#444444] mb-1">
-                {fact.label}
-              </span>
-              <span className="text-xl sm:text-2xl font-semibold text-[#111111] tracking-tight mb-0.5">
-                {fact.value}
-              </span>
-              <span className="text-xs text-[#444444] font-normal leading-snug">
-                {fact.detail}
-              </span>
-            </div>
-          ))}
+        {/* Section Eyebrow & Main Headline */}
+        <div className="max-w-3xl mb-16">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-6 h-[1px] bg-[#800000]"></span>
+            <p className="text-xs font-mono uppercase tracking-[0.25em] text-[#800000] font-semibold">
+              {problemSolution.eyebrow}
+            </p>
+          </div>
+          <h2 className="font-editorial-heading text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] leading-tight mb-4">
+            {problemSolution.headline}
+          </h2>
+          <p className="text-[#444444] text-base sm:text-lg leading-relaxed">
+            {problemSolution.intro}
+          </p>
         </div>
 
-        {/* Problem Recognition to Clarity Transformation */}
-        <div className="mt-14 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-          {/* Left: The Uncertainty / Questions (5 cols) */}
-          <div className="lg:col-span-5 bg-neutral-50 p-6 sm:p-8 border border-neutral-200">
-            <div className="flex items-center gap-2 mb-4 text-[#800000]">
-              <HelpCircle className="w-4 h-4 shrink-0" />
-              <span className="text-xs font-mono uppercase tracking-wider font-semibold">
-                {content.trustStrip.questionsTitle}
-              </span>
+        {/* 3-Column Problem → Consequence → Solution Transformation Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+          {/* Card 1: Client Problem & Questions (4 cols) */}
+          <div className="lg:col-span-4 bg-[#FBFBFA] border border-neutral-200 p-8 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#800000] font-semibold">
+                  01 · {problemSolution.coreProblem.tag}
+                </span>
+                <HelpCircle className="w-4 h-4 text-neutral-400" />
+              </div>
+
+              <h3 className="text-xl font-semibold text-[#111111] mb-3">
+                {problemSolution.coreProblem.title}
+              </h3>
+
+              <p className="text-xs text-[#444444] mb-6 leading-relaxed">
+                {problemSolution.coreProblem.description}
+              </p>
+
+              <div className="space-y-3">
+                {problemSolution.coreProblem.questions.map((q, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-start gap-2.5 text-xs text-neutral-800 py-1.5 border-b border-neutral-200/60 last:border-0"
+                  >
+                    <span className="font-mono text-[#800000] font-bold text-[10px] mt-0.5">
+                      Q{idx + 1}
+                    </span>
+                    <span className="italic font-serif text-sm">"{q}"</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="space-y-3.5">
-              {content.trustStrip.questions.map((q, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-start gap-3 text-neutral-800 text-sm sm:text-base font-medium py-1.5 border-b border-neutral-200/70 last:border-0"
-                >
-                  <span className="text-xs font-mono text-neutral-400 mt-1">0{idx + 1}</span>
-                  <span className="italic font-serif text-lg text-neutral-900 font-normal">"{q}"</span>
-                </div>
-              ))}
+            <div className="mt-8 pt-4 border-t border-neutral-200 text-[11px] text-neutral-500 font-mono">
+              The root problem is lack of statutory clarity.
             </div>
           </div>
 
-          {/* Right: The Solution & Clarity Statement (7 cols) */}
-          <div className="lg:col-span-7 flex flex-col justify-center">
-            <div className="flex items-center gap-2 mb-3 text-[#800000]">
-              <CheckCircle2 className="w-4 h-4" />
-              <span className="text-xs font-mono uppercase tracking-widest font-semibold">
-                The Practical Solution
-              </span>
+          {/* Card 2: Consequence / Risk of Delay (3 cols) */}
+          <div className="lg:col-span-3 bg-neutral-900 text-white p-8 flex flex-col justify-between border-t-4 border-[#800000]">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#EACEAA] font-semibold">
+                  02 · {problemSolution.consequence.tag}
+                </span>
+                <AlertTriangle className="w-4 h-4 text-[#EACEAA]" />
+              </div>
+
+              <h3 className="text-xl font-semibold text-white mb-3">
+                {problemSolution.consequence.title}
+              </h3>
+
+              <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
+                {problemSolution.consequence.description}
+              </p>
             </div>
 
-            <blockquote className="font-editorial-heading text-2xl sm:text-3xl lg:text-4xl text-[#111111] leading-snug mb-6 font-normal">
-              "{content.trustStrip.clarityStatement}"
-            </blockquote>
+            <div className="mt-8 pt-4 border-t border-white/10 text-[11px] text-[#EACEAA] font-mono">
+              Timely legal intervention preserves options.
+            </div>
+          </div>
 
-            <p className="text-[#444444] text-sm sm:text-base leading-relaxed mb-6 font-sans">
-              Legal concerns can feel overwhelming when compounded by procedural uncertainty. Advocate Anish focuses on untangling the factual record first, ensuring you have complete visibility over your legal position before any court filing or notice is initiated.
-            </p>
+          {/* Card 3: Solution & Defined Outcome (5 cols) */}
+          <div className="lg:col-span-5 bg-white border-2 border-[#111111] p-8 flex flex-col justify-between shadow-sm">
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[11px] font-mono uppercase tracking-wider text-[#800000] font-semibold">
+                  03 · {problemSolution.solution.tag}
+                </span>
+                <ShieldCheck className="w-4 h-4 text-[#800000]" />
+              </div>
+
+              <h3 className="text-xl sm:text-2xl font-semibold text-[#111111] mb-3 leading-snug">
+                {problemSolution.solution.title}
+              </h3>
+
+              <p className="text-sm text-[#444444] leading-relaxed mb-4">
+                {problemSolution.solution.description}
+              </p>
+
+              <blockquote className="p-4 bg-neutral-50 border-l-2 border-[#800000] text-xs text-neutral-800 leading-relaxed font-sans mb-6">
+                {problemSolution.solution.takeaway}
+              </blockquote>
+            </div>
 
             <div>
               <button
                 type="button"
                 onClick={onConsultClick}
-                className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#800000] hover:text-[#660000] border-b border-[#800000] pb-1 transition-colors group"
+                className="w-full bg-[#111111] hover:bg-[#800000] text-white text-xs font-semibold tracking-wider uppercase py-3.5 px-6 transition-colors duration-200 flex items-center justify-center gap-2"
               >
-                <span>Discuss Your Specific Legal Matter</span>
-                <span className="transition-transform group-hover:translate-x-1">→</span>
+                <span>Get Clear Direction on Your Matter</span>
+                <ArrowRight className="w-4 h-4 text-[#EACEAA]" />
               </button>
             </div>
           </div>

@@ -18,11 +18,26 @@
     color: #111111;
     background-color: #ffffff;
     scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  /* Accessible focus indicators */
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Accessible focus indicators for light sections */
   :focus-visible {
     outline: 2px solid #800000;
+    outline-offset: 3px;
+  }
+
+  /* Accessible focus indicators for dark sections */
+  .bg-\[\#111111\] :focus-visible,
+  .bg-neutral-900 :focus-visible,
+  .bg-black :focus-visible,
+  footer :focus-visible,
+  header :focus-visible {
+    outline: 2px solid #EACEAA;
     outline-offset: 3px;
   }
 }
@@ -47,5 +62,20 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  header,
+  footer,
+  aside,
+  button,
+  form {
+    display: none !important;
+  }
+  body {
+    color: #000000 !important;
+    background: #ffffff !important;
   }
 }

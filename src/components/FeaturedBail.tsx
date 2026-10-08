@@ -13,7 +13,7 @@ export const FeaturedBail: React.FC<FeaturedBailProps> = ({
 }) => {
   return (
     <section className="bg-[#111111] text-white py-20 sm:py-28 border-b border-white/10 relative overflow-hidden">
-      {/* Subtle border geometry */}
+      {/* Subtle architectural border geometry */}
       <div className="absolute top-0 right-0 w-96 h-96 border border-[#EACEAA]/5 rotate-45 pointer-events-none translate-x-1/2 -translate-y-1/2" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -23,7 +23,7 @@ export const FeaturedBail: React.FC<FeaturedBailProps> = ({
             <div className="flex items-center gap-3 mb-4">
               <Clock className="w-4 h-4 text-[#EACEAA]" />
               <p className="text-xs font-mono uppercase tracking-[0.25em] text-[#EACEAA] font-semibold">
-                {content.featuredBail.label}
+                {content.featuredBail.eyebrow}
               </p>
             </div>
 
@@ -61,7 +61,7 @@ export const FeaturedBail: React.FC<FeaturedBailProps> = ({
             </div>
           </div>
 
-          {/* Right Column: Clean Category Cards (6 cols) */}
+          {/* Right Column: Clean Category Cards with Triggers (6 cols) */}
           <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {content.featuredBail.categories.map((cat, idx) => (
               <div
@@ -71,16 +71,19 @@ export const FeaturedBail: React.FC<FeaturedBailProps> = ({
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-xs font-mono text-[#EACEAA]">0{idx + 1}</span>
-                    <ShieldAlert className="w-3.5 h-3.5 text-neutral-500" />
+                    <ShieldAlert className="w-3.5 h-3.5 text-neutral-400" />
                   </div>
-                  <h3 className="text-base font-semibold text-white mb-2">
+                  <h3 className="text-base font-semibold text-white mb-1">
                     {cat.title}
                   </h3>
+                  <span className="text-[10px] font-mono uppercase tracking-wider text-[#EACEAA] block mb-2.5">
+                    {cat.trigger}
+                  </span>
                   <p className="text-xs text-neutral-400 leading-relaxed">
                     {cat.desc}
                   </p>
                 </div>
-                <div className="mt-4 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-neutral-400">
+                <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-neutral-400">
                   <span>Sessions & High Court</span>
                   <span className="text-[#EACEAA]">Delhi NCR</span>
                 </div>

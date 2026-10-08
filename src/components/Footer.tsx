@@ -16,10 +16,10 @@ export const Footer: React.FC<FooterProps> = ({
   };
 
   const navLinks = [
-    { label: content.nav.about, href: '#about' },
     { label: content.nav.services, href: '#services' },
     { label: content.nav.approach, href: '#approach' },
-    { label: content.nav.profile, href: '#profile' },
+    { label: content.nav.about, href: '#about' },
+    { label: content.nav.faq, href: '#faq' },
     { label: content.nav.contact, href: '#consultation' },
   ];
 

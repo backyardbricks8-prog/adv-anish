@@ -23,6 +23,8 @@ export const Profile: React.FC<ProfileProps> = ({ content, onSpeakClick }) => {
                   <img
                     src="/assets/profile_opt.webp"
                     alt="Adv. Anish Kumar, Advocate"
+                    width={1000}
+                    height={1333}
                     className="w-full h-auto object-cover aspect-[3/4] filter contrast-[1.02]"
                     loading="lazy"
                   />

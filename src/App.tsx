@@ -4,11 +4,12 @@ import { contentData } from './content/content';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { TrustClarification } from './components/TrustClarification';
-import { About } from './components/About';
 import { Services } from './components/Services';
 import { FeaturedBail } from './components/FeaturedBail';
 import { Approach } from './components/Approach';
 import { WhyWorkWith } from './components/WhyWorkWith';
+import { About } from './components/About';
+import { FAQ } from './components/FAQ';
 import { Profile } from './components/Profile';
 import { ConsultationForm } from './components/ConsultationForm';
 import { WhatsAppCTA } from './components/WhatsAppCTA';
@@ -37,7 +38,6 @@ export default function App() {
         top: offsetPosition,
         behavior: 'smooth',
       });
-      // Optionally focus the full name input for immediate entry
       setTimeout(() => {
         const input = document.getElementById('fullName');
         if (input) input.focus();
@@ -76,52 +76,61 @@ export default function App() {
         onNavigateToConsultation={() => scrollToConsultation()}
       />
 
-      {/* Main Page Flow */}
+      {/* Main Page Flow: Problem → Relevance → Expertise → Trust → Process → Action */}
       <main id="main-content" className="flex-grow">
-        {/* Hero Section */}
+        {/* 01: Hero Section */}
         <Hero
           content={content}
           onConsultClick={() => scrollToConsultation()}
           onExploreClick={scrollToServices}
         />
 
-        {/* Uncertainty-to-Clarity & Verified Trust Facts Strip */}
+        {/* 02: Problem → Consequence → Solution Transformation */}
         <TrustClarification
           content={content}
           onConsultClick={() => scrollToConsultation()}
         />
 
-        {/* About Advocate Section */}
-        <About
-          content={content}
-          onConsultClick={() => scrollToConsultation()}
-        />
-
-        {/* Legal Services: Numbered Editorial List (01-07) */}
+        {/* 03: Decision-Making Services Interface (01-07) */}
         <Services
           content={content}
           onSelectServiceToConsult={(serviceTitle) => scrollToConsultation(serviceTitle)}
         />
 
-        {/* Featured Bail Matters Section */}
+        {/* 04: Featured Bail Matters Section */}
         <FeaturedBail
           content={content}
           onBailConsultClick={() => scrollToConsultation('Bail Matters')}
         />
 
-        {/* Practice Methodology: 4-Stage Approach */}
-        <Approach content={content} />
+        {/* 05: Practice Methodology: 4-Stage Approach */}
+        <Approach
+          content={content}
+          onConsultClick={() => scrollToConsultation()}
+        />
 
-        {/* Core Principles: Why Clients Work With Advocate Anish */}
+        {/* 06: Core Principles & Verified Differentiators */}
         <WhyWorkWith content={content} />
 
-        {/* Verified Professional Profile */}
+        {/* 07: About the Advocate (Philosophy & Chamber) */}
+        <About
+          content={content}
+          onConsultClick={() => scrollToConsultation()}
+        />
+
+        {/* 08: Frequently Asked Questions (Accordion) */}
+        <FAQ
+          content={content}
+          onConsultClick={() => scrollToConsultation()}
+        />
+
+        {/* 09: Personal Professional Profile */}
         <Profile
           content={content}
           onSpeakClick={() => scrollToConsultation()}
         />
 
-        {/* Primary Consultation & Lead Capture Section */}
+        {/* 10: Primary Consultation & Lead Capture Section */}
         <ConsultationForm
           content={content}
           selectedMatter={selectedMatter}
@@ -129,10 +138,10 @@ export default function App() {
         />
       </main>
 
-      {/* Fixed WhatsApp Conversion Layer */}
+      {/* Persistent Fixed WhatsApp Conversion Layer */}
       <WhatsAppCTA phone={content.brand.phone} />
 
-      {/* Global Footer */}
+      {/* Editorial Footer */}
       <Footer
         content={content}
         onNavigateToConsultation={() => scrollToConsultation()}
