@@ -1,21 +1,23 @@
-import { useState } from 'react';
-import { Locale } from './types';
-import { contentData } from './content/content';
-import { Navbar } from './components/Navbar';
-import { Hero } from './components/Hero';
-import { TrustClarification } from './components/TrustClarification';
-import { Services } from './components/Services';
-import { FeaturedBail } from './components/FeaturedBail';
-import { Approach } from './components/Approach';
-import { WhyWorkWith } from './components/WhyWorkWith';
-import { About } from './components/About';
-import { FAQ } from './components/FAQ';
-import { Profile } from './components/Profile';
-import { ConsultationForm } from './components/ConsultationForm';
-import { WhatsAppCTA } from './components/WhatsAppCTA';
-import { Footer } from './components/Footer';
+'use client';
 
-export default function App() {
+import { useState } from 'react';
+import { Locale } from '@/types';
+import { contentData } from '@/content/content';
+import { Navbar } from '@/components/Navbar';
+import { Hero } from '@/components/Hero';
+import { TrustClarification } from '@/components/TrustClarification';
+import { Services } from '@/components/Services';
+import { FeaturedBail } from '@/components/FeaturedBail';
+import { Approach } from '@/components/Approach';
+import { WhyWorkWith } from '@/components/WhyWorkWith';
+import { About } from '@/components/About';
+import { FAQ } from '@/components/FAQ';
+import { Profile } from '@/components/Profile';
+import { ConsultationForm } from '@/components/ConsultationForm';
+import { WhatsAppCTA } from '@/components/WhatsAppCTA';
+import { Footer } from '@/components/Footer';
+
+export function ClientApp() {
   const [locale, setLocale] = useState<Locale>('en');
   const [selectedMatter, setSelectedMatter] = useState<string>('Bail Matters');
 

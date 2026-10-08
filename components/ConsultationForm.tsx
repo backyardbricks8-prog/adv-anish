@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { SiteContent } from '../content/content';
 import { ConsultationFormData } from '../types';

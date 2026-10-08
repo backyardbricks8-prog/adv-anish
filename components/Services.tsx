@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { SiteContent } from '../content/content';
 import { ArrowUpRight, ChevronDown, Check, Clock, UserCheck, ShieldAlert } from 'lucide-react';

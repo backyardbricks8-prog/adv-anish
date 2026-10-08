@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { Locale } from '../types';
 import { SiteContent } from '../content/content';

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import { SiteContent } from '../content/content';
 import { ChevronDown, HelpCircle, ArrowUpRight } from 'lucide-react';

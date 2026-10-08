@@ -11,16 +11,18 @@
  *    - Execute as: Me (your Google account)
  *    - Who has access: Anyone
  * 4. Copy the Web App URL (ends in /exec).
- * 5. Replace 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL' below with your deployed URL,
- *    OR define VITE_GOOGLE_SHEETS_WEB_APP_URL in your .env file.
+ * 5. Replace the URL below with your deployed URL,
+ *    OR define NEXT_PUBLIC_GOOGLE_SHEETS_WEB_APP_URL in your .env file.
  */
 
 export const CONFIG = {
   // Configured Google Apps Script Web App URL:
   googleSheetsWebAppUrl:
-    (typeof import.meta !== 'undefined' &&
-      import.meta.env &&
-      import.meta.env.VITE_GOOGLE_SHEETS_WEB_APP_URL) ||
+    (typeof process !== 'undefined' &&
+      process.env &&
+      (process.env.NEXT_PUBLIC_GOOGLE_SHEETS_WEB_APP_URL ||
+        process.env.GOOGLE_SHEETS_WEB_APP_URL ||
+        process.env.VITE_GOOGLE_SHEETS_WEB_APP_URL)) ||
     'https://script.google.com/macros/s/AKfycbyQHiyXcydcz7ADhMumrmWxyhc1U7kjGZ4ZldoAAMJCo7D0m9hmI4OIgB2xdkUgne46/exec',
 };
 
