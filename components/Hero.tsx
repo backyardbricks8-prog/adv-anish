@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { ArrowDown, ArrowUpRight, ShieldCheck, MapPin, Scale } from 'lucide-react';
@@ -20,7 +22,7 @@ export const Hero: React.FC<HeroProps> = ({
     >
       {/* Subtle Architectural Watermark Typography */}
       <div
-        className="absolute -top-12 right-0 select-none pointer-events-none opacity-[0.03] text-white font-brand-mark text-[14vw] tracking-[0.25em] whitespace-nowrap leading-none z-0"
+        className="absolute -top-12 right-0 select-none pointer-events-none opacity-[0.03] text-white font-heading font-black text-[14vw] tracking-[0.25em] whitespace-nowrap leading-none z-0"
         aria-hidden="true"
       >
         {content.hero.watermark}
@@ -38,13 +40,16 @@ export const Hero: React.FC<HeroProps> = ({
               </p>
             </div>
 
-            {/* Main Headline */}
-            <h1 className="font-editorial-heading text-3xl sm:text-5xl md:text-[3.5rem] font-normal tracking-tight text-white leading-[1.1] mb-6 max-w-2xl">
-              {content.hero.headline}
+            {/* Main Headline with clamp and restrained italic accent */}
+            <h1 className="font-heading text-[clamp(2.125rem,4.5vw,3.75rem)] font-bold tracking-tight text-white leading-[1.12] mb-6 max-w-2xl">
+              When the matter is serious, your legal representation should be{' '}
+              <span className="font-editorial text-[#EACEAA] font-normal not-italic italic inline-block pr-1">
+                stronger.
+              </span>
             </h1>
 
             {/* Supporting Paragraph */}
-            <p className="text-neutral-300 text-base sm:text-lg font-normal leading-relaxed max-w-xl mb-10 font-sans">
+            <p className="text-neutral-300 text-base sm:text-lg font-normal leading-[1.6] max-w-xl mb-10 font-sans">
               {content.hero.supporting}
             </p>
 
@@ -53,7 +58,7 @@ export const Hero: React.FC<HeroProps> = ({
               <button
                 type="button"
                 onClick={onConsultClick}
-                className="bg-[#800000] hover:bg-[#660000] active:scale-[0.98] text-white text-xs sm:text-sm font-semibold tracking-wider uppercase px-7 py-4 transition-all duration-200 border border-[#800000] hover:border-[#EACEAA]/50 flex items-center justify-center gap-2 shadow-sm focus-visible:outline-white"
+                className="bg-[#800000] hover:bg-[#660000] active:scale-[0.98] text-white text-xs sm:text-sm font-semibold tracking-wider uppercase px-7 py-4 transition-all duration-200 border border-[#800000] hover:border-[#EACEAA]/50 flex items-center justify-center gap-2 shadow-sm focus-visible:outline-white cursor-pointer"
               >
                 <span>{content.hero.ctaPrimary}</span>
                 <ArrowUpRight className="w-4 h-4 text-[#EACEAA]" aria-hidden="true" />
@@ -62,7 +67,7 @@ export const Hero: React.FC<HeroProps> = ({
               <button
                 type="button"
                 onClick={onExploreClick}
-                className="bg-transparent hover:bg-white/5 active:scale-[0.98] text-neutral-200 hover:text-white text-xs sm:text-sm font-medium tracking-wider uppercase px-7 py-4 transition-all duration-200 border border-white/20 hover:border-white/40 flex items-center justify-center gap-2 focus-visible:outline-white"
+                className="bg-transparent hover:bg-white/5 active:scale-[0.98] text-neutral-200 hover:text-white text-xs sm:text-sm font-medium tracking-wider uppercase px-7 py-4 transition-all duration-200 border border-white/20 hover:border-white/40 flex items-center justify-center gap-2 focus-visible:outline-white cursor-pointer"
               >
                 <span>{content.hero.ctaSecondary}</span>
                 <ArrowDown className="w-4 h-4 text-neutral-400" aria-hidden="true" />
@@ -70,7 +75,7 @@ export const Hero: React.FC<HeroProps> = ({
             </div>
 
             {/* Subtle Trust Indicators (Direct, Location, Privilege) */}
-            <div className="pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-5 text-xs text-neutral-300">
+            <div className="pt-6 border-t border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-5 text-xs text-neutral-300 font-sans">
               <div className="flex items-start gap-3">
                 <ShieldCheck className="w-4 h-4 text-[#EACEAA] shrink-0 mt-0.5" />
                 <div>
@@ -131,7 +136,7 @@ export const Hero: React.FC<HeroProps> = ({
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black via-black/90 to-transparent pt-12 pb-5 px-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-white font-serif text-lg font-medium tracking-wide">
+                      <p className="text-white font-heading text-lg font-semibold tracking-wide">
                         {content.brand.advocateTitle}
                       </p>
                       <p className="text-[#EACEAA] text-[11px] font-mono uppercase tracking-widest">

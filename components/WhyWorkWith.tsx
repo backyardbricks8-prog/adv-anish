@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { UserCheck, MessageSquare, BookOpen, ShieldCheck } from 'lucide-react';
@@ -21,10 +23,13 @@ export const WhyWorkWith: React.FC<WhyWorkWithProps> = ({ content }) => {
               {whyChoose.eyebrow}
             </p>
           </div>
-          <h2 className="font-editorial-heading text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] leading-tight mb-4">
-            {whyChoose.headline}
+          <h2 className="font-heading text-[clamp(1.75rem,3.2vw,2.75rem)] font-bold text-[#111111] leading-[1.2] mb-4">
+            Advocacy anchored in{' '}
+            <span className="font-editorial text-[#800000] font-normal not-italic italic inline-block pr-1">
+              preparation and direct counsel.
+            </span>
           </h2>
-          <p className="text-[#444444] text-base leading-relaxed">
+          <p className="text-[#444444] text-base leading-[1.6] font-sans">
             {whyChoose.intro}
           </p>
         </div>
@@ -49,11 +54,11 @@ export const WhyWorkWith: React.FC<WhyWorkWithProps> = ({ content }) => {
                     </span>
                   </div>
 
-                  <h3 className="text-xl sm:text-2xl font-semibold text-[#111111] mb-3 tracking-tight">
+                  <h3 className="font-heading text-xl sm:text-2xl font-bold text-[#111111] mb-3 tracking-tight">
                     {item.title}
                   </h3>
 
-                  <p className="text-sm text-[#444444] leading-relaxed mb-6 font-normal">
+                  <p className="text-sm text-[#444444] leading-relaxed mb-6 font-normal font-sans">
                     {item.description}
                   </p>
                 </div>

@@ -281,10 +281,13 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
               {content.consultation.eyebrow}
             </p>
           </div>
-          <h2 className="font-editorial-heading text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] leading-tight mb-4">
-            {content.consultation.headline}
+          <h2 className="font-heading text-[clamp(1.75rem,3.2vw,2.75rem)] font-bold text-[#111111] leading-[1.2] mb-4">
+            Have a critical legal matter?{' '}
+            <span className="font-editorial text-[#800000] font-normal not-italic italic inline-block pr-1">
+              Let's discuss it.
+            </span>
           </h2>
-          <p className="text-[#444444] text-base leading-relaxed">
+          <p className="text-[#444444] text-base leading-[1.6] font-sans">
             {content.consultation.subhead}
           </p>
         </div>
@@ -578,7 +581,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           {/* Right Column: Verified Chamber Contact Card (5 cols) */}
           <div className="lg:col-span-5">
             <div className="bg-[#111111] text-white p-8 sm:p-10 border border-white/10">
-              <h3 className="font-serif text-2xl font-normal text-white mb-2">
+              <h3 className="font-heading text-2xl font-bold text-white mb-2">
                 {contactCard.title}
               </h3>
               <p className="text-xs text-[#EACEAA] font-mono uppercase tracking-widest mb-8">

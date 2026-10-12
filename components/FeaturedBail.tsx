@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { Clock, ShieldAlert, ArrowUpRight, Scale } from 'lucide-react';
@@ -27,15 +29,18 @@ export const FeaturedBail: React.FC<FeaturedBailProps> = ({
               </p>
             </div>
 
-            <h2 className="font-editorial-heading text-3xl sm:text-4xl lg:text-5xl font-normal text-white leading-[1.12] mb-4">
-              {content.featuredBail.headline}
+            <h2 className="font-heading text-[clamp(1.75rem,3.2vw,2.75rem)] font-bold text-white leading-[1.15] mb-4">
+              When time matters,{' '}
+              <span className="font-editorial text-[#EACEAA] font-normal not-italic italic inline-block pr-1">
+                clarity matters more.
+              </span>
             </h2>
 
-            <p className="text-[#EACEAA] text-sm sm:text-base font-serif italic mb-6">
+            <p className="text-[#EACEAA] text-sm sm:text-base font-editorial not-italic italic mb-6">
               {content.featuredBail.subhead}
             </p>
 
-            <p className="text-neutral-300 text-sm sm:text-base leading-relaxed mb-8">
+            <p className="text-neutral-300 text-sm sm:text-base leading-[1.6] mb-8 font-sans">
               {content.featuredBail.intro}
             </p>
 
@@ -53,7 +58,7 @@ export const FeaturedBail: React.FC<FeaturedBailProps> = ({
               <button
                 type="button"
                 onClick={onBailConsultClick}
-                className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-7 py-4 transition-all duration-200 border border-[#800000] hover:border-[#EACEAA]/40 inline-flex items-center gap-2 shadow-lg"
+                className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-7 py-4 transition-all duration-200 border border-[#800000] hover:border-[#EACEAA]/40 inline-flex items-center gap-2 shadow-lg cursor-pointer"
               >
                 <span>{content.featuredBail.cta}</span>
                 <ArrowUpRight className="w-4 h-4 text-[#EACEAA]" />
@@ -73,17 +78,17 @@ export const FeaturedBail: React.FC<FeaturedBailProps> = ({
                     <span className="text-xs font-mono text-[#EACEAA]">0{idx + 1}</span>
                     <ShieldAlert className="w-3.5 h-3.5 text-neutral-400" />
                   </div>
-                  <h3 className="text-base font-semibold text-white mb-1">
+                  <h3 className="font-heading text-base font-bold text-white mb-1">
                     {cat.title}
                   </h3>
                   <span className="text-[10px] font-mono uppercase tracking-wider text-[#EACEAA] block mb-2.5">
                     {cat.trigger}
                   </span>
-                  <p className="text-xs text-neutral-400 leading-relaxed">
+                  <p className="text-xs text-neutral-400 leading-relaxed font-sans">
                     {cat.desc}
                   </p>
                 </div>
-                <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-neutral-400">
+                <div className="mt-5 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-neutral-400 font-mono">
                   <span>Sessions & High Court</span>
                   <span className="text-[#EACEAA]">Delhi NCR</span>
                 </div>

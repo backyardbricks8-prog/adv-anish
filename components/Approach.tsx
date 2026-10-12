@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { CheckCircle2 } from 'lucide-react';
@@ -21,10 +23,13 @@ export const Approach: React.FC<ApproachProps> = ({ content, onConsultClick }) =
               {approach.eyebrow}
             </p>
           </div>
-          <h2 className="font-editorial-heading text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] leading-tight mb-4">
-            {approach.headline}
+          <h2 className="font-heading text-[clamp(1.75rem,3.2vw,2.75rem)] font-bold text-[#111111] leading-[1.2] mb-4">
+            A disciplined framework for{' '}
+            <span className="font-editorial text-[#800000] font-normal not-italic italic inline-block pr-1">
+              strategic legal advocacy.
+            </span>
           </h2>
-          <p className="text-[#444444] text-base leading-relaxed">
+          <p className="text-[#444444] text-base leading-[1.6] font-sans">
             {approach.intro}
           </p>
         </div>
@@ -48,22 +53,22 @@ export const Approach: React.FC<ApproachProps> = ({ content, onConsultClick }) =
                 </div>
 
                 {/* Title & Subtitle */}
-                <h3 className="text-xl font-semibold text-[#111111] mb-1 tracking-tight">
+                <h3 className="font-heading text-xl font-bold text-[#111111] mb-1 tracking-tight">
                   {step.title}
                 </h3>
-                <p className="text-xs font-mono text-[#800000] uppercase tracking-wider mb-4 font-semibold">
+                <p className="text-xs font-editorial text-[#800000] not-italic italic mb-4 font-normal">
                   {step.subtitle}
                 </p>
 
                 {/* Details */}
-                <p className="text-xs sm:text-sm text-[#444444] leading-relaxed mb-6 font-normal">
+                <p className="text-xs sm:text-sm text-[#444444] leading-relaxed mb-6 font-normal font-sans">
                   {step.details}
                 </p>
               </div>
 
               {/* Client takeaway box: makes the user feel clear & supported */}
               <div className="pt-4 border-t border-neutral-100">
-                <div className="flex items-start gap-2 text-xs text-neutral-800 bg-neutral-50 p-3 border border-neutral-200/80">
+                <div className="flex items-start gap-2 text-xs text-neutral-800 bg-neutral-50 p-3 border border-neutral-200/80 font-sans">
                   <CheckCircle2 className="w-3.5 h-3.5 text-[#800000] shrink-0 mt-0.5" />
                   <span className="leading-snug">{step.clientTakeaway}</span>
                 </div>
@@ -74,13 +79,13 @@ export const Approach: React.FC<ApproachProps> = ({ content, onConsultClick }) =
 
         {/* Process CTA prompt */}
         <div className="mt-12 text-center">
-          <p className="text-xs sm:text-sm text-[#444444] mb-4">
+          <p className="text-xs sm:text-sm text-[#444444] mb-4 font-sans">
             Uncertainty narrows your options. A 15-minute consultation establishes your legal position.
           </p>
           <button
             type="button"
             onClick={onConsultClick}
-            className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#800000] hover:text-[#660000] border-b border-[#800000] pb-1 transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-[#800000] hover:text-[#660000] border-b border-[#800000] pb-1 transition-colors cursor-pointer"
           >
             <span>Start With Phase 01 — Schedule an Initial Review</span>
             <span>→</span>

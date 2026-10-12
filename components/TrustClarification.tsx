@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { HelpCircle, AlertTriangle, ArrowRight, ShieldCheck } from 'lucide-react';
@@ -24,10 +26,13 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
               {problemSolution.eyebrow}
             </p>
           </div>
-          <h2 className="font-editorial-heading text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] leading-tight mb-4">
-            {problemSolution.headline}
+          <h2 className="font-heading text-[clamp(1.75rem,3.2vw,2.75rem)] font-bold text-[#111111] leading-[1.2] mb-4">
+            Facing a legal issue is stressful. The critical challenge is{' '}
+            <span className="font-editorial text-[#800000] font-normal not-italic italic inline-block pr-1">
+              knowing what to do next.
+            </span>
           </h2>
-          <p className="text-[#444444] text-base sm:text-lg leading-relaxed">
+          <p className="text-[#444444] text-base sm:text-lg leading-[1.6] font-sans">
             {problemSolution.intro}
           </p>
         </div>
@@ -44,11 +49,11 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
                 <HelpCircle className="w-4 h-4 text-neutral-400" />
               </div>
 
-              <h3 className="text-xl font-semibold text-[#111111] mb-3">
+              <h3 className="font-heading text-xl font-bold text-[#111111] mb-3">
                 {problemSolution.coreProblem.title}
               </h3>
 
-              <p className="text-xs text-[#444444] mb-6 leading-relaxed">
+              <p className="text-sm text-[#444444] mb-6 leading-relaxed font-sans">
                 {problemSolution.coreProblem.description}
               </p>
 
@@ -56,12 +61,14 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
                 {problemSolution.coreProblem.questions.map((q, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start gap-2.5 text-xs text-neutral-800 py-1.5 border-b border-neutral-200/60 last:border-0"
+                    className="flex items-start gap-2.5 text-xs text-neutral-800 py-1.5 border-b border-neutral-200/60 last:border-0 font-sans"
                   >
                     <span className="font-mono text-[#800000] font-bold text-[10px] mt-0.5">
                       Q{idx + 1}
                     </span>
-                    <span className="italic font-serif text-sm">"{q}"</span>
+                    <span className="font-editorial text-sm text-[#111111] font-normal not-italic italic leading-snug">
+                      "{q}"
+                    </span>
                   </div>
                 ))}
               </div>
@@ -82,11 +89,11 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
                 <AlertTriangle className="w-4 h-4 text-[#EACEAA]" />
               </div>
 
-              <h3 className="text-xl font-semibold text-white mb-3">
+              <h3 className="font-heading text-xl font-bold text-white mb-3">
                 {problemSolution.consequence.title}
               </h3>
 
-              <p className="text-xs sm:text-sm text-neutral-300 leading-relaxed">
+              <p className="text-sm text-neutral-300 leading-relaxed font-sans">
                 {problemSolution.consequence.description}
               </p>
             </div>
@@ -106,11 +113,15 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
                 <ShieldCheck className="w-4 h-4 text-[#800000]" />
               </div>
 
-              <h3 className="text-xl sm:text-2xl font-semibold text-[#111111] mb-3 leading-snug">
-                {problemSolution.solution.title}
+              <h3 className="font-heading text-xl sm:text-2xl font-bold text-[#111111] mb-3 leading-snug">
+                Understand the facts.{' '}
+                <span className="font-editorial text-[#800000] font-normal not-italic italic inline-block pr-1">
+                  Define the strategy.
+                </span>{' '}
+                Move forward.
               </h3>
 
-              <p className="text-sm text-[#444444] leading-relaxed mb-4">
+              <p className="text-sm text-[#444444] leading-relaxed mb-4 font-sans">
                 {problemSolution.solution.description}
               </p>
 
@@ -123,9 +134,9 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
               <button
                 type="button"
                 onClick={onConsultClick}
-                className="w-full bg-[#111111] hover:bg-[#800000] text-white text-xs font-semibold tracking-wider uppercase py-3.5 px-6 transition-colors duration-200 flex items-center justify-center gap-2"
+                className="w-full bg-[#111111] hover:bg-[#800000] text-white text-xs font-semibold tracking-wider uppercase py-3.5 px-6 transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
-                <span>Get Clear Direction on Your Matter</span>
+                <span>Get Strategic Direction on Your Matter</span>
                 <ArrowRight className="w-4 h-4 text-[#EACEAA]" />
               </button>
             </div>

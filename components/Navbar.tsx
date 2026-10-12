@@ -188,7 +188,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     key={link.href}
                     href={link.href}
                     onClick={(e) => handleLinkClick(e, link.href)}
-                    className="text-white text-xl font-serif py-3 border-b border-white/10 flex items-center justify-between group"
+                    className="text-white text-xl font-heading font-semibold py-3 border-b border-white/10 flex items-center justify-between group"
                   >
                     <span className="group-hover:text-[#EACEAA] transition-colors">{link.label}</span>
                     <span className="text-xs font-mono text-neutral-400">0{idx + 1} →</span>

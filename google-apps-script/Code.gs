@@ -17,8 +17,8 @@
  *    click "Advanced", then "Go to (unsafe)" to grant permission to write to your Sheet.
  * 9. Copy the generated Web App URL (ends with "/exec").
  * 10. Paste this URL into:
- *     /src/config/sheets.ts (replace 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL')
- *     OR set VITE_GOOGLE_SHEETS_WEB_APP_URL in your environment.
+ *     /config/sheets.ts (replace 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL')
+ *     OR set NEXT_PUBLIC_GOOGLE_SHEETS_WEB_APP_URL in your environment.
  */
 
 function doPost(e) {

@@ -94,9 +94,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, error: 'Please select a valid practice area.' }, { status: 400 });
     }
 
-    if (!briefDescription || briefDescription.length < 15 || briefDescription.length > 3000) {
+    if (!briefDescription || briefDescription.length < 5 || briefDescription.length > 3000) {
       return NextResponse.json(
-        { success: false, error: 'Please provide at least 15 characters describing your matter.' },
+        { success: false, error: 'Please provide at least 5 characters describing your matter.' },
         { status: 400 }
       );
     }

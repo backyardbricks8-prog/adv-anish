@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { MapPin, Phone, Mail, ArrowUpRight } from 'lucide-react';
@@ -44,7 +46,7 @@ export const Profile: React.FC<ProfileProps> = ({ content, onSpeakClick }) => {
                 </p>
               </div>
 
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-brand-mark font-bold text-white tracking-wide mb-1">
+              <h2 className="font-heading text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-wide mb-1">
                 {content.profile.name}
               </h2>
 
@@ -52,16 +54,16 @@ export const Profile: React.FC<ProfileProps> = ({ content, onSpeakClick }) => {
                 {content.profile.designation}
               </p>
 
-              <p className="text-neutral-300 text-base sm:text-lg font-serif italic mb-6">
+              <p className="text-neutral-200 text-base sm:text-lg font-editorial not-italic italic mb-6">
                 "{content.profile.headline}"
               </p>
 
-              <p className="text-neutral-300 text-sm sm:text-base leading-relaxed mb-8 max-w-2xl font-sans">
+              <p className="text-neutral-300 text-sm sm:text-base leading-[1.6] mb-8 max-w-2xl font-sans">
                 {content.profile.description}
               </p>
 
               {/* Verified Information Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-white/10 mb-8 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-6 border-t border-white/10 mb-8 text-xs font-sans">
                 <div className="flex items-start gap-3">
                   <MapPin className="w-4 h-4 text-[#EACEAA] shrink-0 mt-0.5" />
                   <div>
@@ -122,7 +124,7 @@ export const Profile: React.FC<ProfileProps> = ({ content, onSpeakClick }) => {
                 <button
                   type="button"
                   onClick={onSpeakClick}
-                  className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-7 py-3.5 transition-colors inline-flex items-center gap-2 border border-[#800000] hover:border-[#EACEAA]/50 shadow-sm"
+                  className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-7 py-3.5 transition-colors inline-flex items-center gap-2 border border-[#800000] hover:border-[#EACEAA]/50 shadow-sm cursor-pointer"
                 >
                   <span>{content.profile.cta}</span>
                   <ArrowUpRight className="w-4 h-4 text-[#EACEAA]" />

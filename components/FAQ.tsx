@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { SiteContent } from '../content/content';
 import { ChevronDown, HelpCircle, ArrowUpRight } from 'lucide-react';
 
@@ -11,7 +11,7 @@ interface FAQProps {
 
 export const FAQ: React.FC<FAQProps> = ({ content, onConsultClick }) => {
   const { faq } = content;
-  const [openIndex, setOpenIndex] = useState<number | null>(0);
+  const [openIndex, setOpenIndex] = React.useState<number | null>(0);
 
   const toggleAccordion = (idx: number) => {
     setOpenIndex((prev) => (prev === idx ? null : idx));
@@ -28,10 +28,13 @@ export const FAQ: React.FC<FAQProps> = ({ content, onConsultClick }) => {
               {faq.eyebrow}
             </p>
           </div>
-          <h2 className="font-editorial-heading text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] leading-tight mb-4">
-            {faq.headline}
+          <h2 className="font-heading text-[clamp(1.75rem,3.2vw,2.75rem)] font-bold text-[#111111] leading-[1.2] mb-4">
+            Clear answers before you take the{' '}
+            <span className="font-editorial text-[#800000] font-normal not-italic italic inline-block pr-1">
+              first legal step.
+            </span>
           </h2>
-          <p className="text-[#444444] text-base leading-relaxed">
+          <p className="text-[#444444] text-base leading-[1.6] font-sans">
             {faq.intro}
           </p>
         </div>
@@ -51,7 +54,7 @@ export const FAQ: React.FC<FAQProps> = ({ content, onConsultClick }) => {
                 <button
                   type="button"
                   onClick={() => toggleAccordion(idx)}
-                  className="w-full text-left py-6 px-4 sm:px-6 flex items-start sm:items-center justify-between gap-4 focus-visible:outline-neutral-900 group"
+                  className="w-full text-left py-6 px-4 sm:px-6 flex items-start sm:items-center justify-between gap-4 focus-visible:outline-neutral-900 group cursor-pointer"
                   aria-expanded={isOpen}
                   aria-controls={`faq-answer-${idx}`}
                 >
@@ -59,7 +62,7 @@ export const FAQ: React.FC<FAQProps> = ({ content, onConsultClick }) => {
                     <span className="text-xs font-mono text-[#800000] font-bold mt-0.5">
                       Q{idx + 1}
                     </span>
-                    <h3 className="text-base sm:text-lg font-semibold text-[#111111] group-hover:text-[#800000] transition-colors leading-snug">
+                    <h3 className="font-heading text-base sm:text-lg font-bold text-[#111111] group-hover:text-[#800000] transition-colors leading-snug">
                       {item.question}
                     </h3>
                   </div>
@@ -76,7 +79,7 @@ export const FAQ: React.FC<FAQProps> = ({ content, onConsultClick }) => {
                 {isOpen && (
                   <div
                     id={`faq-answer-${idx}`}
-                    className="px-4 sm:px-6 pb-6 pt-1 pl-12 sm:pl-16 text-sm sm:text-base text-[#444444] leading-relaxed animate-in fade-in duration-200"
+                    className="px-4 sm:px-6 pb-6 pt-1 pl-12 sm:pl-16 text-sm sm:text-base text-[#444444] leading-[1.6] font-sans animate-in fade-in duration-200"
                   >
                     <p className="max-w-3xl">{item.answer}</p>
                   </div>
@@ -93,7 +96,7 @@ export const FAQ: React.FC<FAQProps> = ({ content, onConsultClick }) => {
               <HelpCircle className="w-3.5 h-3.5" />
               <span>Direct Legal Guidance</span>
             </div>
-            <p className="text-sm sm:text-base font-medium text-white">
+            <p className="font-sans text-sm sm:text-base font-medium text-white">
               {faq.ctaPrompt}
             </p>
           </div>
@@ -101,7 +104,7 @@ export const FAQ: React.FC<FAQProps> = ({ content, onConsultClick }) => {
           <button
             type="button"
             onClick={onConsultClick}
-            className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-6 py-3.5 transition-colors inline-flex items-center gap-2 shrink-0 border border-[#800000] hover:border-[#EACEAA]/40 shadow-sm"
+            className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-6 py-3.5 transition-colors inline-flex items-center gap-2 shrink-0 border border-[#800000] hover:border-[#EACEAA]/40 shadow-sm cursor-pointer"
           >
             <span>{faq.ctaButton}</span>
             <ArrowUpRight className="w-4 h-4 text-[#EACEAA]" />

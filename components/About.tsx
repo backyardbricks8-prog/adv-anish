@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { ArrowUpRight } from 'lucide-react';
@@ -33,10 +35,10 @@ export const About: React.FC<AboutProps> = ({ content, onConsultClick }) => {
                 <p className="text-[11px] font-mono uppercase tracking-widest text-[#EACEAA]">
                   Advocate Chamber
                 </p>
-                <p className="text-sm font-medium mt-1">
+                <p className="text-sm font-medium mt-1 font-sans">
                   271 Saket Court Complex, New Delhi 110017
                 </p>
-                <p className="text-xs text-neutral-400 mt-1">
+                <p className="text-xs text-neutral-400 mt-1 font-sans">
                   Serving District Courts across Delhi NCR & High Court of Delhi
                 </p>
               </div>
@@ -54,19 +56,22 @@ export const About: React.FC<AboutProps> = ({ content, onConsultClick }) => {
             </div>
 
             {/* Headline */}
-            <h2 className="font-editorial-heading text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] leading-[1.15] mb-8">
-              {about.headline}
+            <h2 className="font-heading text-[clamp(1.75rem,3.2vw,2.75rem)] font-bold text-[#111111] leading-[1.15] mb-8">
+              Legal representation begins with{' '}
+              <span className="font-editorial text-[#800000] font-normal not-italic italic inline-block pr-1">
+                understanding the matter.
+              </span>
             </h2>
 
             {/* Paragraphs */}
-            <div className="space-y-5 text-[#444444] text-base leading-relaxed mb-10">
+            <div className="space-y-5 text-[#444444] text-base leading-[1.6] mb-10 font-sans max-w-2xl">
               {about.paragraphs.map((p, idx) => (
                 <p key={idx}>{p}</p>
               ))}
             </div>
 
             {/* Verified Facts & Credentials Grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 pt-6 border-t border-neutral-200 mb-10 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 pt-6 border-t border-neutral-200 mb-10 text-xs font-sans">
               {about.credentials.map((cred, idx) => (
                 <div key={idx} className="p-3.5 bg-neutral-50 border border-neutral-200">
                   <span className="font-mono text-[10px] uppercase text-[#800000] font-semibold block mb-0.5">
@@ -84,7 +89,7 @@ export const About: React.FC<AboutProps> = ({ content, onConsultClick }) => {
               <button
                 type="button"
                 onClick={onConsultClick}
-                className="bg-[#111111] hover:bg-[#800000] text-white text-xs font-semibold tracking-wider uppercase px-7 py-3.5 transition-colors duration-200 inline-flex items-center gap-2 shadow-sm"
+                className="bg-[#111111] hover:bg-[#800000] text-white text-xs font-semibold tracking-wider uppercase px-7 py-3.5 transition-colors duration-200 inline-flex items-center gap-2 shadow-sm cursor-pointer"
               >
                 <span>{about.cta}</span>
                 <ArrowUpRight className="w-4 h-4 text-[#EACEAA]" />

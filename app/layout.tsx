@@ -1,5 +1,28 @@
 import type { Metadata, Viewport } from 'next';
+import { Inter, Manrope, Playfair_Display } from 'next/font/google';
 import './globals.css';
+
+const inter = Inter({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-inter',
+  weight: ['400', '500', '600', '700'],
+});
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-manrope',
+  weight: ['500', '600', '700', '800'],
+});
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-playfair',
+  style: ['normal', 'italic'],
+  weight: ['500', '600', '700'],
+});
 
 export const metadata: Metadata = {
   title: 'Advocate Anish | Legal Advocate in Delhi NCR',
@@ -102,8 +125,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className="bg-white text-[#111111] antialiased selection:bg-[#EACEAA] selection:text-[#111111]">
+    <html
+      lang="en"
+      className={`scroll-smooth ${inter.variable} ${manrope.variable} ${playfair.variable}`}
+    >
+      <body className="bg-white text-[#111111] antialiased selection:bg-[#EACEAA] selection:text-[#111111] font-sans">
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

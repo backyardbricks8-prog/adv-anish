@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { MapPin, Phone, Mail, ArrowUp } from 'lucide-react';
