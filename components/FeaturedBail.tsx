@@ -3,6 +3,8 @@
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { Clock, ShieldAlert, ArrowUpRight, Scale } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { ScrollReveal } from './ScrollReveal';
 
 interface FeaturedBailProps {
   content: SiteContent;
@@ -13,15 +15,23 @@ export const FeaturedBail: React.FC<FeaturedBailProps> = ({
   content,
   onBailConsultClick,
 }) => {
+  const shouldReduceMotion = useReducedMotion();
+
   return (
     <section className="bg-[#111111] text-white py-20 sm:py-28 border-b border-white/10 relative overflow-hidden">
-      {/* Subtle architectural border geometry */}
-      <div className="absolute top-0 right-0 w-96 h-96 border border-[#EACEAA]/5 rotate-45 pointer-events-none translate-x-1/2 -translate-y-1/2" />
+      {/* Subtle architectural border geometry with gentle rotation */}
+      <motion.div
+        initial={shouldReduceMotion ? { opacity: 0.05 } : { opacity: 0, rotate: 30 }}
+        whileInView={shouldReduceMotion ? { opacity: 0.05 } : { opacity: 0.07, rotate: 45 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute top-0 right-0 w-96 h-96 border border-[#EACEAA] pointer-events-none translate-x-1/2 -translate-y-1/2"
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-          {/* Left Column: Urgent Positioning & Ethics (6 cols) */}
-          <div className="lg:col-span-6">
+          {/* Left Column: Urgent Positioning & Ethics (6 cols) with ScrollReveal */}
+          <ScrollReveal className="lg:col-span-6">
             <div className="flex items-center gap-3 mb-4">
               <Clock className="w-4 h-4 text-[#EACEAA]" />
               <p className="text-xs font-mono uppercase tracking-[0.25em] text-[#EACEAA] font-semibold">
@@ -55,23 +65,34 @@ export const FeaturedBail: React.FC<FeaturedBailProps> = ({
             </div>
 
             <div>
-              <button
+              <motion.button
                 type="button"
                 onClick={onBailConsultClick}
-                className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-7 py-4 transition-all duration-200 border border-[#800000] hover:border-[#EACEAA]/40 inline-flex items-center gap-2 shadow-lg cursor-pointer"
+                whileHover={shouldReduceMotion ? {} : { y: -2 }}
+                whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+                className="group bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-7 py-4 transition-all duration-200 border border-[#800000] hover:border-[#EACEAA]/40 inline-flex items-center gap-2 shadow-lg cursor-pointer"
               >
                 <span>{content.featuredBail.cta}</span>
-                <ArrowUpRight className="w-4 h-4 text-[#EACEAA]" />
-              </button>
+                <ArrowUpRight className="w-4 h-4 text-[#EACEAA] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+              </motion.button>
             </div>
-          </div>
+          </ScrollReveal>
 
-          {/* Right Column: Clean Category Cards with Triggers (6 cols) */}
+          {/* Right Column: Clean Category Cards with Triggers (6 cols) with Staggered Entrance and Hover Lift */}
           <div className="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
             {content.featuredBail.categories.map((cat, idx) => (
-              <div
+              <motion.div
                 key={idx}
-                className="p-6 bg-neutral-900/70 border border-white/10 hover:border-[#EACEAA]/40 transition-colors flex flex-col justify-between"
+                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+                whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{
+                  duration: 0.55,
+                  delay: idx * 0.1,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                whileHover={shouldReduceMotion ? {} : { y: -3 }}
+                className="p-6 bg-neutral-900/70 border border-white/10 hover:border-[#EACEAA]/40 transition-all duration-200 flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-center justify-between mb-3">
@@ -92,7 +113,7 @@ export const FeaturedBail: React.FC<FeaturedBailProps> = ({
                   <span>Sessions & High Court</span>
                   <span className="text-[#EACEAA]">Delhi NCR</span>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>

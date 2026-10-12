@@ -5,6 +5,8 @@ import { SiteContent } from '../content/content';
 import { ConsultationFormData } from '../types';
 import { GOOGLE_SHEETS_WEB_APP_URL } from '../config/sheets';
 import { trackFormEvent } from '../lib/analytics';
+import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
+import { ScrollReveal } from './ScrollReveal';
 import {
   CheckCircle2,
   AlertCircle,
@@ -41,6 +43,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const shouldReduceMotion = useReducedMotion();
 
   const { form: formContent, contactCard } = content.consultation;
   const { validationErrors } = formContent;
@@ -98,85 +101,75 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+
     if (errors[name as keyof ConsultationFormData]) {
-      setErrors((prev) => ({ ...prev, [name]: undefined }));
+      const errorMsg = validateField(name as keyof ConsultationFormData, value);
+      setErrors((prev) => ({ ...prev, [name]: errorMsg || undefined }));
     }
-    if (serverError) setServerError(null);
+  };
+
+  const validateAll = (): boolean => {
+    const newErrors: Partial<Record<keyof ConsultationFormData, string>> = {};
+    (Object.keys(formData) as Array<keyof ConsultationFormData>).forEach((field) => {
+      const errorMsg = validateField(field, formData[field]);
+      if (errorMsg) newErrors[field] = errorMsg;
+    });
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting) return; // Prevent double-click rapid submission
     setServerError(null);
 
-    // 1. Bot spam protection: honeypot check
-    if (honeypot.trim().length > 0) {
-      // Silently accept without posting to sheet
-      setSubmitSuccess(true);
-      trackFormEvent('form_submit_success', { serviceCategory: formData.legalMatter });
+    // Silent reject if honeypot is filled (bot detected)
+    if (honeypot.trim()) {
+      setIsSubmitting(true);
+      setTimeout(() => {
+        setIsSubmitting(false);
+        setSubmitSuccess(true);
+      }, 700);
       return;
     }
 
-    // 2. Client-side field validation
-    const newErrors: Partial<Record<keyof ConsultationFormData, string>> = {};
-    (Object.keys(formData) as Array<keyof ConsultationFormData>).forEach((key) => {
-      const err = validateField(key, formData[key]);
-      if (err) newErrors[key] = err;
-    });
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      trackFormEvent('form_submit_error');
-      // Focus first error field for accessibility
-      const firstErrorField = Object.keys(newErrors)[0];
-      const element = document.getElementsByName(firstErrorField)[0];
-      if (element) (element as HTMLElement).focus();
+    if (!validateAll()) {
+      trackFormEvent('form_validation_fail');
       return;
     }
 
     setIsSubmitting(true);
-
-    // 3. Prepare Google Sheet payload matching specification
-    const sheetPayload = {
-      name: formData.fullName.trim(),
-      email: formData.email.trim(),
-      phone: formData.phone.trim(),
-      service: formData.legalMatter,
-      message: formData.briefDescription.trim(),
-      pageUrl: typeof window !== 'undefined' ? window.location.href : '',
-      formName: 'Consultation Enquiry',
-      submittedAt: new Date().toISOString(),
-    };
-
-    const isCustomSheetUrlConfigured =
-      GOOGLE_SHEETS_WEB_APP_URL &&
-      GOOGLE_SHEETS_WEB_APP_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL' &&
-      GOOGLE_SHEETS_WEB_APP_URL.startsWith('http');
+    trackFormEvent('form_submit_start', { serviceCategory: formData.legalMatter });
 
     try {
-      if (isCustomSheetUrlConfigured) {
-        // Direct POST to Google Apps Script Web App
-        // Uses text/plain to avoid browser CORS preflight (OPTIONS) failure
+      if (
+        GOOGLE_SHEETS_WEB_APP_URL &&
+        GOOGLE_SHEETS_WEB_APP_URL !== 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL'
+      ) {
+        const sheetPayload = {
+          fullName: formData.fullName.trim(),
+          phone: formData.phone.trim(),
+          email: formData.email.trim(),
+          legalMatter: formData.legalMatter,
+          briefDescription: formData.briefDescription.trim(),
+          timestamp: new Date().toISOString(),
+          source: 'Advocate Anish Website (Next.js)',
+        };
+
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12-second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 9000);
 
         try {
           const sheetRes = await fetch(GOOGLE_SHEETS_WEB_APP_URL, {
             method: 'POST',
             headers: {
-              'Content-Type': 'text/plain;charset=utf-8',
+              'Content-Type': 'application/json',
             },
             body: JSON.stringify(sheetPayload),
             signal: controller.signal,
           });
-          clearTimeout(timeoutId);
 
-          // Asynchronously record backup in server
-          fetch('/api/consultation', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(formData),
-          }).catch(() => {});
+          clearTimeout(timeoutId);
 
           const resData = await sheetRes.json().catch(() => null);
 
@@ -273,8 +266,8 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
   return (
     <section id="consultation" className="bg-white py-20 sm:py-28 border-b border-neutral-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="max-w-3xl mb-14">
+        {/* Section Header with ScrollReveal */}
+        <ScrollReveal className="max-w-3xl mb-14">
           <div className="flex items-center gap-3 mb-4">
             <span className="w-6 h-[1px] bg-[#800000]"></span>
             <p className="text-xs font-mono uppercase tracking-[0.25em] text-[#800000] font-semibold">
@@ -290,297 +283,320 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
           <p className="text-[#444444] text-base leading-[1.6] font-sans">
             {content.consultation.subhead}
           </p>
-        </div>
+        </ScrollReveal>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
-          {/* Left Column: Form (7 cols) */}
+          {/* Left Column: Form with Smooth State Transition (7 cols) */}
           <div className="lg:col-span-7">
-            {submitSuccess ? (
-              /* Success Confirmation Card */
-              <div
-                className="bg-[#FBFBFA] border border-neutral-200 p-8 sm:p-10 shadow-sm"
-                role="status"
-                aria-live="polite"
-              >
-                <div className="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mb-6">
-                  <CheckCircle2 className="w-7 h-7" />
-                </div>
+            <AnimatePresence mode="wait">
+              {submitSuccess ? (
+                /* Success Confirmation Card with Spring checkmark reveal */
+                <motion.div
+                  key="success-card"
+                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 12 }}
+                  animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, scale: 1, y: 0 }}
+                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: -10 }}
+                  transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                  className="bg-[#FBFBFA] border border-neutral-200 p-8 sm:p-10 shadow-sm"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <motion.div
+                    initial={shouldReduceMotion ? {} : { scale: 0.3, opacity: 0 }}
+                    animate={shouldReduceMotion ? {} : { scale: 1, opacity: 1 }}
+                    transition={{ type: 'spring', stiffness: 350, damping: 22, delay: 0.1 }}
+                    className="w-12 h-12 bg-emerald-100 text-emerald-800 rounded-full flex items-center justify-center mb-6"
+                  >
+                    <CheckCircle2 className="w-7 h-7" />
+                  </motion.div>
 
-                <h3 className="text-2xl font-semibold text-[#111111] mb-3">
-                  {formContent.successTitle}
-                </h3>
+                  <h3 className="text-2xl font-semibold text-[#111111] mb-3">
+                    {formContent.successTitle}
+                  </h3>
 
-                <p className="text-[#444444] text-base leading-relaxed mb-6">
-                  {formContent.successMessage}
-                </p>
-
-                <div className="p-4 bg-white border border-neutral-200 text-xs text-neutral-600 mb-8 space-y-1">
-                  <div className="flex items-center gap-2 font-medium text-neutral-900">
-                    <Lock className="w-3.5 h-3.5 text-[#800000]" />
-                    <span>Statutory Confidentiality Assured</span>
-                  </div>
-                  <p>
-                    All communications are covered by advocate-client privilege under Indian law. Your inquiry is reviewed directly by Adv. Anish Kumar.
+                  <p className="text-[#444444] text-base leading-relaxed mb-6 font-sans">
+                    {formContent.successMessage}
                   </p>
-                </div>
 
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <a
-                    href="https://wa.me/919204463290?text=Hello%20Advocate%20Anish%2C%20I%20have%20submitted%20a%20consultation%20request%20regarding%20a%20legal%20matter."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-6 py-3.5 transition-colors inline-flex items-center justify-center gap-2"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Connect on WhatsApp</span>
-                  </a>
-
-                  <button
-                    type="button"
-                    onClick={handleResetForm}
-                    className="border border-neutral-300 hover:border-neutral-900 text-neutral-800 text-xs font-semibold tracking-wider uppercase px-6 py-3.5 transition-colors"
-                  >
-                    {formContent.newInquiryButton}
-                  </button>
-                </div>
-              </div>
-            ) : (
-              /* Consultation Form */
-              <form
-                onSubmit={handleSubmit}
-                noValidate
-                className="bg-[#FBFBFA] p-6 sm:p-10 border border-neutral-200 space-y-6"
-                aria-label="Legal Consultation Request Form"
-              >
-                {/* Honeypot field for invisible spam protection */}
-                <div className="hidden" aria-hidden="true" tabIndex={-1}>
-                  <label htmlFor="website_hp">Leave this field blank</label>
-                  <input
-                    type="text"
-                    id="website_hp"
-                    name="website_hp"
-                    value={honeypot}
-                    onChange={(e) => setHoneypot(e.target.value)}
-                    tabIndex={-1}
-                    autoComplete="off"
-                  />
-                </div>
-
-                {/* Safe Human-Friendly Error Alert */}
-                {serverError && (
-                  <div
-                    className="p-4 bg-red-50 border-l-4 border-[#800000] text-red-900 flex items-start gap-3"
-                    role="alert"
-                  >
-                    <AlertCircle className="w-5 h-5 text-[#800000] shrink-0 mt-0.5" />
-                    <div className="text-xs sm:text-sm">
-                      <p className="font-semibold">Notice</p>
-                      <p className="mt-0.5">{serverError}</p>
+                  <div className="p-4 bg-white border border-neutral-200 text-xs text-neutral-600 mb-8 space-y-1">
+                    <div className="flex items-center gap-2 font-medium text-neutral-900">
+                      <Lock className="w-3.5 h-3.5 text-[#800000]" />
+                      <span>Statutory Confidentiality Assured</span>
                     </div>
+                    <p>
+                      All communications are covered by advocate-client privilege under Indian law. Your inquiry is reviewed directly by Adv. Anish Kumar.
+                    </p>
                   </div>
-                )}
 
-                {/* Full Name & Phone Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {/* Full Name */}
-                  <div>
-                    <label
-                      htmlFor="fullName"
-                      className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <motion.a
+                      href="https://wa.me/919204463290?text=Hello%20Advocate%20Anish%2C%20I%20have%20submitted%20a%20consultation%20request%20regarding%20a%20legal%20matter."
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      whileHover={shouldReduceMotion ? {} : { y: -2 }}
+                      whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+                      className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-6 py-3.5 transition-colors inline-flex items-center justify-center gap-2 cursor-pointer shadow-sm"
                     >
-                      {formContent.fullNameLabel} <span className="text-[#800000]">*</span>
-                    </label>
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Connect on WhatsApp</span>
+                    </motion.a>
+
+                    <button
+                      type="button"
+                      onClick={handleResetForm}
+                      className="border border-neutral-300 hover:border-neutral-900 text-neutral-800 text-xs font-semibold tracking-wider uppercase px-6 py-3.5 transition-colors cursor-pointer"
+                    >
+                      {formContent.newInquiryButton}
+                    </button>
+                  </div>
+                </motion.div>
+              ) : (
+                /* Consultation Form with Enhanced Focus Effects */
+                <motion.form
+                  key="consultation-form"
+                  initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                  animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
+                  transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                  onSubmit={handleSubmit}
+                  noValidate
+                  className="bg-[#FBFBFA] p-6 sm:p-10 border border-neutral-200 space-y-6 shadow-sm"
+                  aria-label="Legal Consultation Request Form"
+                >
+                  {/* Honeypot field for invisible spam protection */}
+                  <div className="hidden" aria-hidden="true" tabIndex={-1}>
+                    <label htmlFor="website_hp">Leave this field blank</label>
                     <input
                       type="text"
-                      id="fullName"
-                      name="fullName"
-                      autoComplete="name"
-                      value={formData.fullName}
-                      onChange={handleInputChange}
-                      placeholder={formContent.fullNamePlaceholder}
-                      maxLength={100}
-                      disabled={isSubmitting}
-                      className={`w-full bg-white border px-4 py-3 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors ${
-                        errors.fullName ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
-                      }`}
-                      aria-invalid={!!errors.fullName}
-                      aria-describedby={errors.fullName ? 'fullName-error' : undefined}
-                      required
+                      id="website_hp"
+                      name="website_hp"
+                      value={honeypot}
+                      onChange={(e) => setHoneypot(e.target.value)}
+                      tabIndex={-1}
+                      autoComplete="off"
                     />
-                    {errors.fullName && (
-                      <p id="fullName-error" className="mt-1.5 text-xs text-red-600 font-medium" role="alert">
-                        {errors.fullName}
-                      </p>
-                    )}
                   </div>
 
-                  {/* Phone Number */}
-                  <div>
-                    <label
-                      htmlFor="phone"
-                      className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
+                  {/* Safe Human-Friendly Error Alert */}
+                  {serverError && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="p-4 bg-red-50 border-l-4 border-[#800000] text-red-900 flex items-start gap-3"
+                      role="alert"
                     >
-                      {formContent.phoneLabel} <span className="text-[#800000]">*</span>
-                    </label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      autoComplete="tel"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      placeholder={formContent.phonePlaceholder}
-                      maxLength={20}
-                      disabled={isSubmitting}
-                      className={`w-full bg-white border px-4 py-3 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors ${
-                        errors.phone ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
-                      }`}
-                      aria-invalid={!!errors.phone}
-                      aria-describedby={errors.phone ? 'phone-error' : undefined}
-                      required
-                    />
-                    {errors.phone && (
-                      <p id="phone-error" className="mt-1.5 text-xs text-red-600 font-medium" role="alert">
-                        {errors.phone}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Email Address & Legal Matter Row */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {/* Email */}
-                  <div>
-                    <label
-                      htmlFor="email"
-                      className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
-                    >
-                      {formContent.emailLabel} <span className="text-[#800000]">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      autoComplete="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder={formContent.emailPlaceholder}
-                      maxLength={120}
-                      disabled={isSubmitting}
-                      className={`w-full bg-white border px-4 py-3 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors ${
-                        errors.email ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
-                      }`}
-                      aria-invalid={!!errors.email}
-                      aria-describedby={errors.email ? 'email-error' : undefined}
-                      required
-                    />
-                    {errors.email && (
-                      <p id="email-error" className="mt-1.5 text-xs text-red-600 font-medium" role="alert">
-                        {errors.email}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Legal Matter Dropdown */}
-                  <div>
-                    <label
-                      htmlFor="legalMatter"
-                      className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
-                    >
-                      {formContent.matterLabel} <span className="text-[#800000]">*</span>
-                    </label>
-                    <select
-                      id="legalMatter"
-                      name="legalMatter"
-                      value={formData.legalMatter}
-                      onChange={handleInputChange}
-                      disabled={isSubmitting}
-                      className="w-full bg-white border border-neutral-300 px-4 py-3 text-base sm:text-sm text-[#111111] focus:outline-none focus:border-[#800000] transition-colors"
-                      required
-                    >
-                      {formContent.matterOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
-                    {errors.legalMatter && (
-                      <p className="mt-1.5 text-xs text-red-600 font-medium" role="alert">
-                        {errors.legalMatter}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Brief Description */}
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <label
-                      htmlFor="briefDescription"
-                      className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111]"
-                    >
-                      {formContent.descLabel} <span className="text-[#800000]">*</span>
-                    </label>
-                    <span className="text-[11px] font-mono text-neutral-400">
-                      {formData.briefDescription.length}/1000
-                    </span>
-                  </div>
-                  <textarea
-                    id="briefDescription"
-                    name="briefDescription"
-                    rows={4}
-                    value={formData.briefDescription}
-                    onChange={handleInputChange}
-                    placeholder={formContent.descPlaceholder}
-                    maxLength={1000}
-                    disabled={isSubmitting}
-                    className={`w-full bg-white border p-4 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:border-[#800000] transition-colors resize-y ${
-                      errors.briefDescription ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
-                    }`}
-                    aria-invalid={!!errors.briefDescription}
-                    aria-describedby={errors.briefDescription ? 'desc-error' : undefined}
-                    required
-                  />
-                  {errors.briefDescription && (
-                    <p id="desc-error" className="mt-1.5 text-xs text-red-600 font-medium" role="alert">
-                      {errors.briefDescription}
-                    </p>
+                      <AlertCircle className="w-5 h-5 text-[#800000] shrink-0 mt-0.5" />
+                      <div className="text-xs sm:text-sm">
+                        <p className="font-semibold">Notice</p>
+                        <p className="mt-0.5">{serverError}</p>
+                      </div>
+                    </motion.div>
                   )}
-                </div>
 
-                {/* Privacy Assurance Text */}
-                <div className="flex items-start gap-2.5 text-xs text-neutral-500 pt-1">
-                  <Lock className="w-3.5 h-3.5 text-[#800000] shrink-0 mt-0.5" />
-                  <p>{formContent.privacyConsent}</p>
-                </div>
+                  {/* Full Name & Phone Row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* Full Name */}
+                    <div>
+                      <label
+                        htmlFor="fullName"
+                        className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
+                      >
+                        {formContent.fullNameLabel} <span className="text-[#800000]">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="fullName"
+                        name="fullName"
+                        autoComplete="name"
+                        value={formData.fullName}
+                        onChange={handleInputChange}
+                        placeholder={formContent.fullNamePlaceholder}
+                        maxLength={100}
+                        disabled={isSubmitting}
+                        className={`w-full bg-white border px-4 py-3 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#800000]/15 focus:border-[#800000] transition-all duration-200 ${
+                          errors.fullName ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
+                        }`}
+                        aria-invalid={!!errors.fullName}
+                        aria-describedby={errors.fullName ? 'fullName-error' : undefined}
+                        required
+                      />
+                      {errors.fullName && (
+                        <p id="fullName-error" className="mt-1.5 text-xs text-red-600 font-medium" role="alert">
+                          {errors.fullName}
+                        </p>
+                      )}
+                    </div>
 
-                {/* Submit Action Button */}
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full sm:w-auto bg-[#800000] hover:bg-[#660000] disabled:bg-neutral-400 text-white text-xs font-semibold tracking-wider uppercase px-8 py-4 transition-all duration-200 border border-[#800000] hover:border-[#EACEAA]/50 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-sm"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>{formContent.submittingButton}</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>{formContent.submitButton}</span>
-                        <ArrowRight className="w-4 h-4 text-[#EACEAA]" />
-                      </>
+                    {/* Phone Number */}
+                    <div>
+                      <label
+                        htmlFor="phone"
+                        className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
+                      >
+                        {formContent.phoneLabel} <span className="text-[#800000]">*</span>
+                      </label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        autoComplete="tel"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        placeholder={formContent.phonePlaceholder}
+                        maxLength={20}
+                        disabled={isSubmitting}
+                        className={`w-full bg-white border px-4 py-3 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#800000]/15 focus:border-[#800000] transition-all duration-200 ${
+                          errors.phone ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
+                        }`}
+                        aria-invalid={!!errors.phone}
+                        aria-describedby={errors.phone ? 'phone-error' : undefined}
+                        required
+                      />
+                      {errors.phone && (
+                        <p id="phone-error" className="mt-1.5 text-xs text-red-600 font-medium" role="alert">
+                          {errors.phone}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Email Address & Legal Matter Row */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {/* Email */}
+                    <div>
+                      <label
+                        htmlFor="email"
+                        className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
+                      >
+                        {formContent.emailLabel} <span className="text-[#800000]">*</span>
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        autoComplete="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder={formContent.emailPlaceholder}
+                        maxLength={120}
+                        disabled={isSubmitting}
+                        className={`w-full bg-white border px-4 py-3 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#800000]/15 focus:border-[#800000] transition-all duration-200 ${
+                          errors.email ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
+                        }`}
+                        aria-invalid={!!errors.email}
+                        aria-describedby={errors.email ? 'email-error' : undefined}
+                        required
+                      />
+                      {errors.email && (
+                        <p id="email-error" className="mt-1.5 text-xs text-red-600 font-medium" role="alert">
+                          {errors.email}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Legal Matter Dropdown */}
+                    <div>
+                      <label
+                        htmlFor="legalMatter"
+                        className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111] mb-2"
+                      >
+                        {formContent.matterLabel} <span className="text-[#800000]">*</span>
+                      </label>
+                      <select
+                        id="legalMatter"
+                        name="legalMatter"
+                        value={formData.legalMatter}
+                        onChange={handleInputChange}
+                        disabled={isSubmitting}
+                        className="w-full bg-white border border-neutral-300 px-4 py-3 text-base sm:text-sm text-[#111111] focus:outline-none focus:ring-2 focus:ring-[#800000]/15 focus:border-[#800000] transition-all duration-200"
+                        required
+                      >
+                        {formContent.matterOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                      {errors.legalMatter && (
+                        <p className="mt-1.5 text-xs text-red-600 font-medium" role="alert">
+                          {errors.legalMatter}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Brief Description */}
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label
+                        htmlFor="briefDescription"
+                        className="block text-xs font-mono uppercase tracking-wider font-semibold text-[#111111]"
+                      >
+                        {formContent.descLabel} <span className="text-[#800000]">*</span>
+                      </label>
+                      <span className="text-[11px] font-mono text-neutral-400">
+                        {formData.briefDescription.length}/1000
+                      </span>
+                    </div>
+                    <textarea
+                      id="briefDescription"
+                      name="briefDescription"
+                      rows={4}
+                      value={formData.briefDescription}
+                      onChange={handleInputChange}
+                      placeholder={formContent.descPlaceholder}
+                      maxLength={1000}
+                      disabled={isSubmitting}
+                      className={`w-full bg-white border p-4 text-base sm:text-sm text-[#111111] placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-[#800000]/15 focus:border-[#800000] transition-all duration-200 resize-y ${
+                        errors.briefDescription ? 'border-red-500 bg-red-50/20' : 'border-neutral-300'
+                      }`}
+                      aria-invalid={!!errors.briefDescription}
+                      aria-describedby={errors.briefDescription ? 'desc-error' : undefined}
+                      required
+                    />
+                    {errors.briefDescription && (
+                      <p id="desc-error" className="mt-1.5 text-xs text-red-600 font-medium" role="alert">
+                        {errors.briefDescription}
+                      </p>
                     )}
-                  </button>
-                </div>
-              </form>
-            )}
+                  </div>
+
+                  {/* Privacy Assurance Text */}
+                  <div className="flex items-start gap-2.5 text-xs text-neutral-500 pt-1">
+                    <Lock className="w-3.5 h-3.5 text-[#800000] shrink-0 mt-0.5" />
+                    <p>{formContent.privacyConsent}</p>
+                  </div>
+
+                  {/* Submit Action Button with Refined Hover */}
+                  <div className="pt-2">
+                    <motion.button
+                      type="submit"
+                      disabled={isSubmitting}
+                      whileHover={shouldReduceMotion || isSubmitting ? {} : { y: -1 }}
+                      whileTap={shouldReduceMotion || isSubmitting ? {} : { scale: 0.98 }}
+                      className="group w-full sm:w-auto bg-[#800000] hover:bg-[#660000] disabled:bg-neutral-400 text-white text-xs font-semibold tracking-wider uppercase px-8 py-4 transition-all duration-200 border border-[#800000] hover:border-[#EACEAA]/50 flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed shadow-sm"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          <span>{formContent.submittingButton}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{formContent.submitButton}</span>
+                          <ArrowRight className="w-4 h-4 text-[#EACEAA] transition-transform duration-200 group-hover:translate-x-1" />
+                        </>
+                      )}
+                    </motion.button>
+                  </div>
+                </motion.form>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Right Column: Verified Chamber Contact Card (5 cols) */}
-          <div className="lg:col-span-5">
-            <div className="bg-[#111111] text-white p-8 sm:p-10 border border-white/10">
+          {/* Right Column: Verified Chamber Contact Card (5 cols) with ScrollReveal & Hover Transition */}
+          <ScrollReveal delay={0.2} className="lg:col-span-5">
+            <div className="bg-[#111111] text-white p-8 sm:p-10 border border-white/10 hover:border-white/20 transition-colors duration-200 shadow-md">
               <h3 className="font-heading text-2xl font-bold text-white mb-2">
                 {contactCard.title}
               </h3>
@@ -611,7 +627,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     </span>
                     <a
                       href={`tel:${content.brand.phone}`}
-                      className="text-white hover:text-[#EACEAA] font-semibold text-base transition-colors"
+                      className="text-white hover:text-[#EACEAA] font-semibold text-base transition-colors duration-200"
                     >
                       {content.brand.displayPhone}
                     </a>
@@ -627,7 +643,7 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
                     </span>
                     <a
                       href={`mailto:${content.brand.email}`}
-                      className="text-neutral-200 hover:text-[#EACEAA] transition-colors break-all"
+                      className="text-neutral-200 hover:text-[#EACEAA] transition-colors duration-200 break-all"
                     >
                       {content.brand.email}
                     </a>
@@ -650,18 +666,20 @@ export const ConsultationForm: React.FC<ConsultationFormProps> = ({
 
               {/* Direct WhatsApp Callout */}
               <div className="mt-8 pt-6 border-t border-white/10">
-                <a
+                <motion.a
                   href="https://wa.me/919204463290?text=Hello%20Advocate%20Anish%2C%20I%20would%20like%20to%20consult%20regarding%20a%20legal%20matter."
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase py-3.5 px-4 transition-colors flex items-center justify-center gap-2 border border-[#800000] hover:border-[#EACEAA]/40 shadow-sm"
+                  whileHover={shouldReduceMotion ? {} : { y: -2 }}
+                  whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+                  className="w-full bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase py-3.5 px-4 transition-colors flex items-center justify-center gap-2 border border-[#800000] hover:border-[#EACEAA]/40 shadow-sm cursor-pointer"
                 >
                   <MessageCircle className="w-4 h-4 text-[#EACEAA]" />
                   <span>Direct WhatsApp Chat</span>
-                </a>
+                </motion.a>
               </div>
             </div>
-          </div>
+          </ScrollReveal>
         </div>
       </div>
     </section>

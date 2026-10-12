@@ -3,6 +3,8 @@
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { HelpCircle, AlertTriangle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { ScrollReveal } from './ScrollReveal';
 
 interface TrustClarificationProps {
   content: SiteContent;
@@ -14,12 +16,13 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
   onConsultClick,
 }) => {
   const { problemSolution } = content;
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <section className="bg-white text-[#111111] py-20 sm:py-28 border-b border-neutral-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Eyebrow & Main Headline */}
-        <div className="max-w-3xl mb-16">
+        {/* Section Eyebrow & Main Headline with ScrollReveal */}
+        <ScrollReveal className="max-w-3xl mb-16">
           <div className="flex items-center gap-3 mb-4">
             <span className="w-6 h-[1px] bg-[#800000]"></span>
             <p className="text-xs font-mono uppercase tracking-[0.25em] text-[#800000] font-semibold">
@@ -35,12 +38,19 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
           <p className="text-[#444444] text-base sm:text-lg leading-[1.6] font-sans">
             {problemSolution.intro}
           </p>
-        </div>
+        </ScrollReveal>
 
-        {/* 3-Column Problem → Consequence → Solution Transformation Grid */}
+        {/* 3-Column Problem → Consequence → Solution Transformation Grid with Staggered Scroll Reveal */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
           {/* Card 1: Client Problem & Questions (4 cols) */}
-          <div className="lg:col-span-4 bg-[#FBFBFA] border border-neutral-200 p-8 flex flex-col justify-between">
+          <motion.div
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
+            whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+            whileHover={shouldReduceMotion ? {} : { y: -3 }}
+            className="lg:col-span-4 bg-[#FBFBFA] border border-neutral-200 p-8 flex flex-col justify-between hover:border-neutral-300 transition-colors shadow-sm"
+          >
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[11px] font-mono uppercase tracking-wider text-[#800000] font-semibold">
@@ -77,10 +87,17 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
             <div className="mt-8 pt-4 border-t border-neutral-200 text-[11px] text-neutral-500 font-mono">
               The root problem is lack of statutory clarity.
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 2: Consequence / Risk of Delay (3 cols) */}
-          <div className="lg:col-span-3 bg-neutral-900 text-white p-8 flex flex-col justify-between border-t-4 border-[#800000]">
+          <motion.div
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
+            whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+            whileHover={shouldReduceMotion ? {} : { y: -3 }}
+            className="lg:col-span-3 bg-neutral-900 text-white p-8 flex flex-col justify-between border-t-4 border-[#800000] shadow-sm transition-transform"
+          >
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[11px] font-mono uppercase tracking-wider text-[#EACEAA] font-semibold">
@@ -101,10 +118,17 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
             <div className="mt-8 pt-4 border-t border-white/10 text-[11px] text-[#EACEAA] font-mono">
               Timely legal intervention preserves options.
             </div>
-          </div>
+          </motion.div>
 
           {/* Card 3: Solution & Defined Outcome (5 cols) */}
-          <div className="lg:col-span-5 bg-white border-2 border-[#111111] p-8 flex flex-col justify-between shadow-sm">
+          <motion.div
+            initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
+            whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-50px' }}
+            transition={{ duration: 0.6, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+            whileHover={shouldReduceMotion ? {} : { y: -3 }}
+            className="lg:col-span-5 bg-white border-2 border-[#111111] p-8 flex flex-col justify-between shadow-md transition-all"
+          >
             <div>
               <div className="flex items-center justify-between mb-4">
                 <span className="text-[11px] font-mono uppercase tracking-wider text-[#800000] font-semibold">
@@ -131,16 +155,18 @@ export const TrustClarification: React.FC<TrustClarificationProps> = ({
             </div>
 
             <div>
-              <button
+              <motion.button
                 type="button"
                 onClick={onConsultClick}
-                className="w-full bg-[#111111] hover:bg-[#800000] text-white text-xs font-semibold tracking-wider uppercase py-3.5 px-6 transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                whileHover={shouldReduceMotion ? {} : { y: -1 }}
+                whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+                className="group w-full bg-[#111111] hover:bg-[#800000] text-white text-xs font-semibold tracking-wider uppercase py-3.5 px-6 transition-colors duration-200 flex items-center justify-center gap-2 cursor-pointer"
               >
                 <span>Get Strategic Direction on Your Matter</span>
-                <ArrowRight className="w-4 h-4 text-[#EACEAA]" />
-              </button>
+                <ArrowRight className="w-4 h-4 text-[#EACEAA] transition-transform duration-200 group-hover:translate-x-1" />
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
         </div>
       </div>
     </section>

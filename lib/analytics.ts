@@ -10,7 +10,12 @@
  * legal-matter descriptions, or any sensitive PII to analytics.
  */
 
-type AllowedFormEvent = 'form_view' | 'form_submit_success' | 'form_submit_error';
+type AllowedFormEvent =
+  | 'form_view'
+  | 'form_submit_start'
+  | 'form_submit_success'
+  | 'form_submit_error'
+  | 'form_validation_fail';
 
 export function trackFormEvent(eventName: AllowedFormEvent, meta?: { serviceCategory?: string }) {
   try {

@@ -2,6 +2,7 @@
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { MapPin, Phone, Mail, ArrowUp } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
 
 interface FooterProps {
   content: SiteContent;
@@ -12,6 +13,8 @@ export const Footer: React.FC<FooterProps> = ({
   content,
   onNavigateToConsultation,
 }) => {
+  const shouldReduceMotion = useReducedMotion();
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -48,13 +51,15 @@ export const Footer: React.FC<FooterProps> = ({
               Personal, focused legal guidance and representation for individuals and businesses navigating critical legal matters across Delhi NCR.
             </p>
 
-            <button
+            <motion.button
               type="button"
               onClick={onNavigateToConsultation}
-              className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-5 py-2.5 transition-colors border border-[#800000] hover:border-[#EACEAA]/40"
+              whileHover={shouldReduceMotion ? {} : { y: -2 }}
+              whileTap={shouldReduceMotion ? {} : { scale: 0.98 }}
+              className="bg-[#800000] hover:bg-[#660000] text-white text-xs font-semibold tracking-wider uppercase px-5 py-2.5 transition-all duration-200 border border-[#800000] hover:border-[#EACEAA]/40 shadow-sm cursor-pointer"
             >
               {content.nav.ctaButton}
-            </button>
+            </motion.button>
           </div>
 
           {/* Quick Navigation (3 cols) */}
@@ -67,9 +72,9 @@ export const Footer: React.FC<FooterProps> = ({
                 <li key={link.href}>
                   <a
                     href={link.href}
-                    className="text-neutral-300 hover:text-white transition-colors flex items-center gap-1.5"
+                    className="text-neutral-300 hover:text-white transition-colors duration-200 flex items-center gap-1.5 group"
                   >
-                    <span className="text-[#EACEAA] text-xs">/</span>
+                    <span className="text-[#EACEAA] text-xs transition-transform duration-200 group-hover:translate-x-0.5">/</span>
                     <span>{link.label}</span>
                   </a>
                 </li>
@@ -91,7 +96,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <Phone className="w-4 h-4 text-[#EACEAA] shrink-0 mt-0.5" />
                 <a
                   href={`tel:${content.brand.phone}`}
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition-colors duration-200"
                 >
                   {content.brand.displayPhone}
                 </a>
@@ -100,7 +105,7 @@ export const Footer: React.FC<FooterProps> = ({
                 <Mail className="w-4 h-4 text-[#EACEAA] shrink-0 mt-0.5" />
                 <a
                   href={`mailto:${content.brand.email}`}
-                  className="hover:text-white transition-colors break-all"
+                  className="hover:text-white transition-colors duration-200 break-all"
                 >
                   {content.brand.email}
                 </a>
@@ -118,15 +123,16 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
           <p>{content.footer.copyright}</p>
 
-          <button
+          <motion.button
             type="button"
             onClick={scrollToTop}
-            className="flex items-center gap-1.5 text-neutral-300 hover:text-[#EACEAA] transition-colors focus-visible:outline-white"
+            whileHover={shouldReduceMotion ? {} : { y: -2 }}
+            className="flex items-center gap-1.5 text-neutral-300 hover:text-[#EACEAA] transition-colors focus-visible:outline-white cursor-pointer group"
             aria-label="Back to top of page"
           >
             <span>Back to top</span>
-            <ArrowUp className="w-3.5 h-3.5" />
-          </button>
+            <ArrowUp className="w-3.5 h-3.5 transition-transform duration-200 group-hover:-translate-y-0.5" />
+          </motion.button>
         </div>
       </div>
     </footer>

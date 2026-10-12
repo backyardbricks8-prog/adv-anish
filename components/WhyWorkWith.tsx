@@ -3,6 +3,8 @@
 import React from 'react';
 import { SiteContent } from '../content/content';
 import { UserCheck, MessageSquare, BookOpen, ShieldCheck } from 'lucide-react';
+import { motion, useReducedMotion } from 'motion/react';
+import { ScrollReveal } from './ScrollReveal';
 
 interface WhyWorkWithProps {
   content: SiteContent;
@@ -11,12 +13,13 @@ interface WhyWorkWithProps {
 export const WhyWorkWith: React.FC<WhyWorkWithProps> = ({ content }) => {
   const { whyChoose } = content;
   const icons = [UserCheck, MessageSquare, BookOpen, ShieldCheck];
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <section className="bg-[#FBFBFA] py-20 sm:py-28 border-b border-neutral-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <div className="max-w-3xl mb-16">
+        {/* Section Header with ScrollReveal */}
+        <ScrollReveal className="max-w-3xl mb-16">
           <div className="flex items-center gap-3 mb-4">
             <span className="w-6 h-[1px] bg-[#800000]"></span>
             <p className="text-xs font-mono uppercase tracking-[0.25em] text-[#800000] font-semibold">
@@ -32,17 +35,26 @@ export const WhyWorkWith: React.FC<WhyWorkWithProps> = ({ content }) => {
           <p className="text-[#444444] text-base leading-[1.6] font-sans">
             {whyChoose.intro}
           </p>
-        </div>
+        </ScrollReveal>
 
-        {/* 4 Core Principles in a 2x2 Clean Editorial Grid */}
+        {/* 4 Core Principles in a 2x2 Clean Editorial Grid with Staggered Scroll Reveal */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {whyChoose.items.map((item, idx) => {
             const IconComponent = icons[idx % icons.length];
 
             return (
-              <div
+              <motion.div
                 key={item.number}
-                className="bg-white p-8 sm:p-10 border border-neutral-200 hover:border-neutral-400 transition-colors flex flex-col justify-between"
+                initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 24 }}
+                whileInView={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-50px' }}
+                transition={{
+                  duration: 0.6,
+                  delay: idx * 0.1,
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                whileHover={shouldReduceMotion ? {} : { y: -3 }}
+                className="bg-white p-8 sm:p-10 border border-neutral-200 hover:border-neutral-400 transition-all duration-200 flex flex-col justify-between shadow-sm"
               >
                 <div>
                   <div className="flex items-center justify-between mb-6">
@@ -68,7 +80,7 @@ export const WhyWorkWith: React.FC<WhyWorkWithProps> = ({ content }) => {
                   <span className="w-1.5 h-1.5 rounded-full bg-[#800000]" />
                   <span>{item.proofPoint}</span>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
         </div>
