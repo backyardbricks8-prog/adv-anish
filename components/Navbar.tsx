@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Locale } from '../types';
 import { SiteContent } from '../content/content';
+import Image from 'next/image';
 import { Menu, X, ArrowUpRight } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'motion/react';
 
@@ -93,15 +94,23 @@ export const Navbar: React.FC<NavbarProps> = ({
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
-            {/* Brand Mark with subtle hover feedback */}
+            {/* Brand Mark with uploaded Advocate Anish logo */}
             <a
               href="#hero"
               onClick={(e) => handleLinkClick(e, '#hero')}
-              className="flex items-center gap-3.5 group focus-visible:outline-white"
+              className="flex items-center gap-3 sm:gap-3.5 group focus-visible:outline-white"
               aria-label="Advocate Anish Home"
             >
-              <div className="w-9 h-9 border border-[#EACEAA]/50 flex items-center justify-center bg-black text-[#EACEAA] font-brand-mark font-bold text-xs tracking-widest group-hover:border-[#EACEAA] transition-colors duration-200">
-                AA
+              <div className="relative w-9 h-9 sm:w-10 sm:h-10 shrink-0 rounded-full border border-white/20 group-hover:border-[#EACEAA] transition-all duration-200 overflow-hidden bg-black flex items-center justify-center shadow-sm">
+                <Image
+                  src="/assets/IMG_4309.PNG"
+                  alt="Advocate Anish Logo"
+                  width={40}
+                  height={40}
+                  priority
+                  className="w-full h-full object-cover object-center rounded-full transition-transform duration-300 group-hover:scale-105"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="text-white font-brand-mark text-sm sm:text-base font-bold tracking-[0.18em] leading-tight group-hover:text-neutral-200 transition-colors duration-200">
